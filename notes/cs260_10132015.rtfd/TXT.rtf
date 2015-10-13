@@ -1,0 +1,191 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1348\cocoasubrtf170
+{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+\margl1440\margr1440\vieww14200\viewh16500\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\qc
+
+\f0\b\fs42 \cf0 Notes CS260\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural
+
+\fs24 \cf0 Ordering
+\b0 :\
+
+\i op
+\i0  - _\
+       |\
+       =\
+\
+Relation R in Powerset(SxS)\
+\
+e.g. 	S = \{1,2,3,6\}\
+	divides evenly | = \{(1,1),(1,2),(1,3),(1,6),(2,2),(2,6),(3,3),(3,6),(6,6)\}\
+	(1,3) in |   or   1 | 3\
+\
+
+\b preorder
+\b0  - reflexive and transitive\
+\
+reflexive, for all x, x 
+\i op
+\i0  x\
+transitive, for all x,y,z, x 
+\i op
+\i0  y and 
+\i y op 
+\i0 z => x 
+\i op 
+\i0 z\
+\
+
+\b strict preorder
+\b0  - removes the reflexive property\
+\
+\
+
+\b equivalence relation
+\b0  - a preorder that is symmetric\
+e.g. for all x,y, x 
+\i op
+\i0  y <=> y 
+\i op 
+\i0 x\
+\
+
+\b partial order
+\b0  (poset) - preorder that is anti-symmetric\
+e.g. for all x,y, x 
+\i op
+\i0  y and y 
+\i op 
+\i0 x => x = y\
+\
+For example: Natural numbers and divisibility\
+\
+Partial order represented as a Hasse diagram{{\NeXTGraphic Pasted Graphic.tiff \width4600 \height4600
+}¬}\
+\
+\
+Exercise: S = \{1,2,3,5,6,10,15,30\}\
+\
+R = \{	(1,1), (1,2), (1,3), (1,5), (1,6), (1,10), (1,15), (1,30),\
+	(2,2), (2,6), (2,10), (2,30),\
+	(3,3), (3,6), (3,15), (3,30),\
+	(5,5), (5,10), (5,15), (5,30),\
+	\
+\
+	     30\
+	  /   |    \\\
+	6   10	15\
+            | / \\  / \\  |\
+	2    3	 5\
+            \\     |   /\
+                 1\
+\
+
+\b total order
+\b0  - partial order, such that all elements are comparable\
+e.g. for all x, y,  x 
+\i op
+\i0  y or y 
+\i op
+\i0  x\
+\
+\
+
+\b Least Upper Bound 
+\b0 (join) (LUB, |_|)\
+given D subset S, then the least X in S s.t. for all d in D, d 
+\i op
+\i0  x\
+ - |_| D\
+ - |_| \{x,y\} : x |_| y\
+\
+                                                              _\
+
+\b Greatest Lower Bound
+\b0  (meet) (GLB, |  |)\
+\
+
+\b Chain 
+\b0 - totally ordered subset of a partial order (poset)\
+\
+
+\b Complete Partial Order
+\b0  (CPO) - a partial order s.t. all ascending chains have a LUB\
+\
+
+\b Pointed Complete Partial Order
+\b0  - a CPO that has a least element _|_ (bottom)\
+                                  							      _\
+
+\b Lattice 
+\b0  - a partial order s.t. ay two elements x,y have a |_| (join) and a |  | (meet)\
+\
+
+\b Noetherian Lattice 
+\b0 (ascending chain condition) - All ascending chains are finite\
+\
+
+\b Bounded Lattice 
+\b0 - a lattice with a  single greatest element T, and a least element _|_\
+											        _\
+
+\b Complete Lattice 
+\b0 - a lattice, s.t. all subsets of the lattice have a |_| (join) and a |  | (meet)\
+	Note: complete lattice is always a bounded lattice\
+\
+\
+Summary:\
+\
+            pre order\
+           /                \\\
+  eq. relation     partial order\
+	                 /     	 \\\
+                      CPO   	 Lattice \
+                         |                   /        \\\
+               pointed-CPO  total order   bounded lattice\
+                                                                      |\
+                                                              complete lattice\
+Exercise 1,2,3 divides evenly\
+\
+1. \{1,2,3\}\
+ Not lattice\
+       \
+      2    3\
+       \\    / \
+         1\
+\
+2. \{1,2,3,6\}\
+Lattice\
+        6\
+       /  \\\
+      2  3\
+       \\  /\
+        1\
+\
+3. \{1,2,3,12,18,36\}\
+Note lattice\
+\
+          36\
+        /     \\\
+      12     18\
+       |  \\  /  |\
+       \\  /  \\ /\
+         2  3\
+          \\  /\
+           1\
+\
+4. N, <=\
+Lattice\
+.\
+.\
+.\
+3\
+|\
+2\
+|\
+1\
+\
+\
+}
