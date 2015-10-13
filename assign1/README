@@ -1,0 +1,10 @@
+name = "Chad Spensky"
+username = "cspensky"
+email = "cspensky@cs.ucsb.edu"
+description = """
+  ANY NOTES YOU MIGHT WANT THE GRADER TO SEE
+  (can include arbitrary whitespace including newlines)
+
+  Leave the entire space between the triple quotes blank if you don't
+  have any notes.  
+"""
