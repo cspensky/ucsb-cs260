@@ -28,7 +28,7 @@ object Concrete {
         }
         catch {
           // program is not well-typed
-          case i:Illtyped ⇒ println(s"TypeError: ${i.msg}")
+          case i:Illtyped ⇒ println("TypeError: ${i.msg}")
         }
 
       case _ ⇒
@@ -46,17 +46,17 @@ package cs260.lwnn.concrete.interpreter {
 // explicitly covered in the formal semantics) should result in a
 // system error like so: sys.error("undefined behavior")
 
-case class State( /* ... */ ) {
+case class State( class_defs:, so:Option[Stmt], ρ:Locals, heap, κs:Seq[Kont] ) {
   // is this a final state (i.e., the program has terminated)?
-  def fin: Boolean =
+  def fin: Boolean = false
     // ...
 
   // we define η here so that we have access to ρ and σ without
   // needing to pass them in as parameters.
-  def η( e:Exp ): Value =
+  def η( e:Exp ): Value = { Str("") }
     // ...
 
   // the state transition relation.
-  def next: State =
+  def next: State = { None }
     // ...
 }
