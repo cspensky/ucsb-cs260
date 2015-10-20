@@ -6,11 +6,13 @@ import scala.util._
 
 import TypeAliases._
 
-val DEBUG = false
+
+
 //——————————————————————————————————————————————————————————————————————————————
 // Concrete interpreter entry point
 
 object Concrete {
+  var DEBUG = false
   def main( args:Array[String] ) {
     // read program from file given as command-line argument and try to parse it
     Parse.getAST( scala.io.Source.fromFile(args(0)).mkString ) match {
@@ -55,6 +57,7 @@ package cs260.lwnn.concrete.interpreter {
 // system error like so: sys.error("undefined behavior")
 
 case class State(/* θ is a global now */ so: Option[Stmt], ρ: Locals, heap: Heap, κs: Seq[Kont]) {
+  var DEBUG = false
   // is this a final state (i.e., the program has terminated)?
   def fin: Boolean =
     so.isEmpty && κs.isEmpty
