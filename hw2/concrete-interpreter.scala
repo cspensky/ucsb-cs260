@@ -6,6 +6,7 @@ import scala.util._
 
 import TypeAliases._
 
+val DEBUG = false
 //——————————————————————————————————————————————————————————————————————————————
 // Concrete interpreter entry point
 
@@ -22,11 +23,14 @@ object Concrete {
           // throws Illtyped exception if program is not well-typed
           Typechecker.typecheck(ast, classTable)
 
-//          println(ast)
           // program is well-formed and well-typed; ready to interpret
           var curr_ς = initstate(ast)
+
+          if (DEBUG) println("θ = "+ θ.class_map)
+
           while ( !curr_ς.fin ) {
-            println(curr_ς)
+            if (DEBUG)
+              println(curr_ς)
             curr_ς = curr_ς.next
           }
         }
@@ -113,12 +117,12 @@ case class State(/* θ is a global now */ so: Option[Stmt], ρ: Locals, heap: He
           s match {
             // Rule 1
             case Assign(x, e) =>
-              println("Assign "+x+" = "+e)
+              if (DEBUG) println("Assign "+x+" = "+e)
               State(None, ρ + (x -> η(e)), heap, κs)
 
             // Rule 2
             case Update(e1:Exp, x:Var, e2)  =>
-              println("Update "+e1+"."+x+" = "+e2)
+              if (DEBUG) println("Update "+e1+"."+x+" = "+e2)
               // Resolve our address
               val exp_val = η(e1)
               exp_val match {
@@ -133,7 +137,7 @@ case class State(/* θ is a global now */ so: Option[Stmt], ρ: Locals, heap: He
 
             // Rule 3
             case Call(x, e, mn, args) =>
-              println("Call "+x+"."+e+" "+mn+" "+args)
+              if (DEBUG) println("Call "+x+"."+e+" "+mn+" "+args)
               // Evaluate our expression
               val exp_val = η(e)
               exp_val match {
@@ -148,16 +152,16 @@ case class State(/* θ is a global now */ so: Option[Stmt], ρ: Locals, heap: He
 
             // Rule 4
             case New(x, cn, args) =>
-              println("New "+x+" "+cn+" "+args)
+              if (DEBUG) println("New "+x+" "+cn+" "+args)
               construct(x, cn, args.map(η(_)), ρ, heap, κs)
 
             // Rule 5 and 6
             case If(e, tb, fb) =>
-              println("If "+e)
+              if (DEBUG) println("If "+e)
               // Evaluate our expression
               val exp_val = η(e)
 
-              println(exp_val)
+              if (DEBUG) println(exp_val)
               exp_val match {
                 case Bool(v) =>
                   // do a function call
@@ -174,7 +178,7 @@ case class State(/* θ is a global now */ so: Option[Stmt], ρ: Locals, heap: He
 
             // Rule 7 and 8
             case While(e, body) =>
-              println("While "+e)
+              if (DEBUG) println("While "+e)
               // Evaluate our expression
               val exp_val = η(e)
               exp_val match {
@@ -199,21 +203,21 @@ case class State(/* θ is a global now */ so: Option[Stmt], ρ: Locals, heap: He
           κs.head match {
             // Rule 9
             case retK(x, e, ret_locals) =>
-              println("retK "+x+" "+e+" "+ret_locals)
+              if (DEBUG) println("retK "+x+" "+e+" "+ret_locals)
               // Evaluate our expression
 
               val exp_val = η(e)
-              println("retK "+x+" = "+exp_val)
+              if (DEBUG) println("retK "+x+" = "+exp_val)
               State(None, ret_locals + (x -> exp_val), heap, κs.tail)
 
             // Rule 10
             case StmtK(stmnt:Stmt) =>
-              println("StmtK "+stmnt)
+              if (DEBUG) println("StmtK "+stmnt)
               State(Option(stmnt), ρ, heap, κs.tail)
 
             // Rule 11 and 12
             case WhileK(e, ss) =>
-              println("WhileK "+e+" "+ss)
+              if (DEBUG) println("WhileK "+e+" "+ss)
               // Evaluate our expression
               val exp_val = η(e)
               exp_val match {
