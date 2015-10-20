@@ -59,7 +59,7 @@ case class State( so:Option[Stmt], ρ:Locals, κs:Seq[Kont] ) {
   // just compute a single path through the computation tree instead
   // of the entire tree.
   def next: State =
-    so match {
+     so match {
       case Some(s) ⇒
         s match {
           // rule 1

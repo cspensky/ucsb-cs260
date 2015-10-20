@@ -22,9 +22,13 @@ object Concrete {
           // throws Illtyped exception if program is not well-typed
           Typechecker.typecheck(ast, classTable)
 
+//          println(ast)
           // program is well-formed and well-typed; ready to interpret
           var curr_ς = initstate(ast)
-          while ( !curr_ς.fin ) curr_ς = curr_ς.next
+          while ( !curr_ς.fin ) {
+            println(curr_ς)
+            curr_ς = curr_ς.next
+          }
         }
         catch {
           // program is not well-typed
@@ -46,17 +50,186 @@ package cs260.lwnn.concrete.interpreter {
 // explicitly covered in the formal semantics) should result in a
 // system error like so: sys.error("undefined behavior")
 
-case class State( class_defs:, so:Option[Stmt], ρ:Locals, heap, κs:Seq[Kont] ) {
+case class State(/* θ is a global now */ so: Option[Stmt], ρ: Locals, heap: Heap, κs: Seq[Kont]) {
   // is this a final state (i.e., the program has terminated)?
-  def fin: Boolean = false
-    // ...
+  def fin: Boolean =
+    so.isEmpty && κs.isEmpty
 
   // we define η here so that we have access to ρ and σ without
   // needing to pass them in as parameters.
-  def η( e:Exp ): Value = { Str("") }
-    // ...
+  def η(e: Exp): Value =
+  // ...
+    e match {
+      // we deal with nondeterministic choice by randomly selecting a
+      // number from the given set.
+      case Nums(ns) =>
+        new ℤ(Random.shuffle(ns.toList).head)
 
-  // the state transition relation.
-  def next: State = { None }
-    // ...
+      case Bools(bs) =>
+        new Bool(Random.shuffle(bs.toList).head)
+
+      case Strs(ss) =>
+        new Str(Random.shuffle(ss.toList).head)
+
+      case Nulls() =>
+        Null
+
+      case x: Var ⇒
+        ρ(x)
+
+      case Access(e, x) =>
+        val exp_val = η(e)
+        exp_val match {
+          case addr:Address =>
+            heap(addr.asInstanceOf[Address]).locals(x)
+          case _ =>
+            sys.error("undefined behavior")
+        }
+
+      case Binop(op, e1, e2) ⇒
+        op match {
+          case ⌜+⌝ ⇒ η(e1) + η(e2)
+          case ⌜−⌝ ⇒ η(e1) − η(e2)
+          case ⌜×⌝ ⇒ η(e1) × η(e2)
+          case ⌜÷⌝ ⇒ η(e1) ÷ η(e2)
+          case ⌜<⌝ ⇒ η(e1) < η(e2)
+          case ⌜≤⌝ ⇒ η(e1) ≤ η(e2)
+          case ⌜≈⌝ ⇒ η(e1) ≈ η(e2)
+          case ⌜≠⌝ ⇒ η(e1) ≠ η(e2)
+          case ⌜∧⌝ ⇒ η(e1) ∧ η(e2)
+          case ⌜∨⌝ ⇒ η(e1) ∨ η(e2)
+        }
+
+      case _ =>
+        sys.error("Got bad expression. (undefined behavior)")
+    }
+
+
+    // the state transition relation.
+    def next: State =
+      so match {
+          // Cases with statements (Rules 1-8)
+        case Some(s) =>
+          s match {
+            // Rule 1
+            case Assign(x, e) =>
+              println("Assign "+x+" = "+e)
+              State(None, ρ + (x -> η(e)), heap, κs)
+
+            // Rule 2
+            case Update(e1:Exp, x:Var, e2)  =>
+              println("Update "+e1+"."+x+" = "+e2)
+              // Resolve our address
+              val exp_val = η(e1)
+              exp_val match {
+                case addr:Address =>
+                  val obj = heap(addr)
+                  val new_obj = Object(obj.cn, obj.locals + (x -> η(e2)) )
+                  State(None, ρ, heap + (addr -> new_obj), κs)
+                case _ =>
+                  sys.error("undefined behavior")
+
+              }
+
+            // Rule 3
+            case Call(x, e, mn, args) =>
+              println("Call "+x+"."+e+" "+mn+" "+args)
+              // Evaluate our expression
+              val exp_val = η(e)
+              exp_val match {
+                case addr:Address =>
+                  // do a function call
+                  call(x, addr, heap, mn, args.map(η(_)), ρ, κs)
+                case _ =>
+                  sys.error("undefined behavior")
+
+              }
+
+
+            // Rule 4
+            case New(x, cn, args) =>
+              println("New "+x+" "+cn+" "+args)
+              construct(x, cn, args.map(η(_)), ρ, heap, κs)
+
+            // Rule 5 and 6
+            case If(e, tb, fb) =>
+              println("If "+e)
+              // Evaluate our expression
+              val exp_val = η(e)
+
+              println(exp_val)
+              exp_val match {
+                case Bool(v) =>
+                  // do a function call
+                  v match {
+                    case true =>
+                      State(None, ρ, heap, toSK(tb) ++  κs)
+                    case false =>
+                      State(None, ρ, heap, toSK(fb) ++  κs)
+                  }
+                case _ =>
+                  sys.error("undefined behavior. (Got a non-boolean value bzck from if)")
+              }
+
+
+            // Rule 7 and 8
+            case While(e, body) =>
+              println("While "+e)
+              // Evaluate our expression
+              val exp_val = η(e)
+              exp_val match {
+                case Bool(v) =>
+                  // do a function call
+                  v match {
+                    case true =>
+                      State(None, ρ, heap, toSK(body) ++ Seq(WhileK(e, body)) ++ κs)
+                    case false =>
+                      State(None, ρ, heap, κs)
+                  }
+                case _ =>
+                  sys.error("undefined behavior")
+              }
+
+            case Print(e) =>
+              println(e+": "+η(e))
+              State(None, ρ, heap, κs)
+          }
+
+        case None =>
+          κs.head match {
+            // Rule 9
+            case retK(x, e, ret_locals) =>
+              println("retK "+x+" "+e+" "+ret_locals)
+              // Evaluate our expression
+
+              val exp_val = η(e)
+              println("retK "+x+" = "+exp_val)
+              State(None, ret_locals + (x -> exp_val), heap, κs.tail)
+
+            // Rule 10
+            case StmtK(stmnt:Stmt) =>
+              println("StmtK "+stmnt)
+              State(Option(stmnt), ρ, heap, κs.tail)
+
+            // Rule 11 and 12
+            case WhileK(e, ss) =>
+              println("WhileK "+e+" "+ss)
+              // Evaluate our expression
+              val exp_val = η(e)
+              exp_val match {
+                case Bool(v) =>
+                  // do a function call
+                  v match {
+                    case true =>
+                      State(None, ρ, heap, toSK(ss) ++ κs)
+                    case false =>
+                      State(None, ρ, heap, κs.tail)
+                  }
+                case _ =>
+                  sys.error("undefined behavior")
+              }
+          }
+      }
+}
+
 }

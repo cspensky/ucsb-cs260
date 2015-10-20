@@ -16,13 +16,26 @@ case object θ {
   type FieldMap = Map[Var, Type]
   type MethodMap = Map[MethodName, Method]
 
-  var class_map = Map[Str, (FieldMap, MethodMap)]
+  var class_map = Map.empty[ClassName, (FieldMap, MethodMap)]
 
-  def apply( className:Str): (FieldMap, MethodMap) =
-    class_map(className)
+  def apply( cn:ClassName ): (FieldMap, MethodMap) = {
+    class_map(cn)
+  }
 
-  def +(name:Str, FieldMap, MethodMap): θ = {
+  def init( prog:Program): Unit = {
+    class_map = class_map + ("TopClass" -> (Map().asInstanceOf[FieldMap], Map().asInstanceOf[MethodMap]) )
+    class_map = prog.classes.foldLeft(Map.empty[ClassName, (FieldMap, MethodMap)]) { (m, c:Class) =>
+      m + (c.cn ->
+        (
+          c.fields.foldLeft(Map.empty[Var, Type]) { (m:FieldMap, f:Decl) => m + (f.x -> f.τ)},
+          c.methods.foldLeft(Map.empty[MethodName, Method]) { (m:MethodMap, mm:Method) => m + (mm.mn -> mm)}
+          )
+        )
+    }
+  }
 
+  def getFirstClassName(): ClassName = {
+    class_map.head._1
   }
 
 }
@@ -56,7 +69,7 @@ case class Heap( address_to_obj:Map[Address, Object] ) {
 
   def +( new_heap_obj:(Address,Object) ): Heap = {
     // Each address can only be used once
-    assert(! (address_to_obj contains new_heap_obj._1) )
+//    assert(! (address_to_obj contains new_heap_obj._1) )
     Heap( address_to_obj + new_heap_obj)
   }
 }
@@ -81,54 +94,57 @@ sealed abstract class Value {
 
 case class ℤ( n:BigInt ) extends Value {
   // Operations for integers
-  def +( z:ℤ ) =
-    ℤ( n + z.n )
+  override def +( z:Value ) =
+    ℤ( n + z.asInstanceOf[ℤ].n )
 
-  def −( z:ℤ ) =
-    ℤ( n - z.n )
+  override def −( z:Value ) =
+    ℤ( n - z.asInstanceOf[ℤ].n )
 
-  def ×( z:ℤ ) =
-    ℤ( n * z.n )
+  override def ×( z:Value ) =
+    ℤ( n * z.asInstanceOf[ℤ].n )
 
-  def ÷( z:ℤ ) =
-    ℤ( n / z.n )
+  override def ÷( z:Value ) =
+    if (z.asInstanceOf[ℤ].n == 0)
+      ℤ( n / z.asInstanceOf[ℤ].n )
+    else
+      sys.error("undefined behavior. (Divide by 0)")
 
-  def <( z:ℤ ) =
-    ℤ( if (n < z.n) 1 else 0 )
+  override def <( z:Value ) =
+    Bool( if (n < z.asInstanceOf[ℤ].n) true else false )
 
-  def ≤( z:ℤ ) =
-    ℤ( if (n <= z.n) 1 else 0 )
+  override def ≤( z:Value ): Value =
+    Bool( if (n <= z.asInstanceOf[ℤ].n) true else false )
 
-//  def ≈( z:ℤ ) =
-//    ℤ( if (n == z.n) 1 else 0 )
+//  def ≈( z:Value ) =
+//    ℤ( if (n == z.asInstanceOf[ℤ].n) 1 else 0 )
 //
-//  def ≠( z:ℤ ) =
-//    ℤ( if (n != z.n) 1 else 0 )
+//  def ≠( z:Value ) =
+//    ℤ( if (n != z.asInstanceOf[ℤ].n) 1 else 0 )
 
   override def toString =
     n.toString
 }
 
 case class Bool( b:Boolean ) extends Value {
-  def ∧( b2:Bool ) =
-    Bool( b && b2.b )
+  override def ∧( b2:Value ) =
+    Bool( b && b2.asInstanceOf[Bool].b )
 
-  def ∨( b2:Bool ) =
-    Bool( b || b2.b )
+  override def ∨( b2:Value ) =
+    Bool( b || b2.asInstanceOf[Bool].b )
 
   override def toString =
     b.toString
 }
 
 case class Str( str:String ) extends Value {
-  def +( s:Str ) =
-    Str( str + s.str )
+  override def +( s:Value ) =
+    Str( str + s.asInstanceOf[Str].str )
 
-  def <( s:Str ) =
-    Bool( str < s.str )
+  override def <( s:Value ) =
+    Bool( str < s.asInstanceOf[Str].str )
 
-  def ≤( s:Str ) =
-    Bool( str <= s.str)
+  override def ≤( s:Value ) =
+    Bool( str <= s.asInstanceOf[Str].str)
 
   override def toString =
     str
@@ -136,7 +152,7 @@ case class Str( str:String ) extends Value {
 
 sealed abstract class Reference extends Value
 
-case class Address( addr:BigInt ) extends Reference {
+case class Address( loc:BigInt ) extends Reference {
 
 //  def +(n2:BigInt): Address = {
 //    Address( n + n2.n )
@@ -162,7 +178,7 @@ case object Null extends Reference {
 //——————————————————————————————————————————————————————————————————————————————
 // Object
 
-case class Object( /* ... */ ) {
+case class Object( cn:ClassName, locals:Locals ) {
   // ...
 }
 
@@ -170,4 +186,6 @@ case class Object( /* ... */ ) {
 // Kont
 
 sealed abstract class Kont
-// ...
+case class StmtK( s:Stmt ) extends Kont
+case class WhileK( e:Exp, ss:Seq[Stmt] ) extends Kont
+case class retK(v:Var, e:Exp, locals:Locals) extends Kont

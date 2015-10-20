@@ -1,5 +1,16 @@
 class A {
-  def Main(self: A) = {
-    self := new A();
+  def A() = {
+    self := new B();
+    self.foo();
+  }
+  def foo() = {
+    print "fooA";
+  }
+}
+
+class B extends A{
+  def B() = {}
+  def foo() = {
+    print "fooB";
   }
 }
