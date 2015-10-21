@@ -17,25 +17,29 @@ case object θ {
   type MethodMap = Map[MethodName, Method]
 
   var class_map = Map.empty[ClassName, (FieldMap, MethodMap)]
+  var first_class = "TopClass"
 
   def apply( cn:ClassName ): (FieldMap, MethodMap) = {
     class_map(cn)
   }
 
   def init( prog:Program): Unit = {
-    class_map = class_map + ("TopClass" -> (Map().asInstanceOf[FieldMap], Map().asInstanceOf[MethodMap]) )
-    class_map = prog.classes.foldLeft(Map.empty[ClassName, (FieldMap, MethodMap)]) { (m, c:Class) =>
+    first_class = prog.classes.head.cn
+    class_map = prog.classes.foldLeft(Map("TopClass" ->
+      (Map().asInstanceOf[FieldMap], Map().asInstanceOf[MethodMap]) )) { (m, c:Class) =>
       m + (c.cn ->
         (
-          c.fields.foldLeft(Map.empty[Var, Type]) { (m:FieldMap, f:Decl) => m + (f.x -> f.τ)},
-          c.methods.foldLeft(Map.empty[MethodName, Method]) { (m:MethodMap, mm:Method) => m + (mm.mn -> mm)}
+          m(c.supercn)._1 ++
+            c.fields.foldLeft(Map.empty[Var, Type]) { (m:FieldMap, f:Decl) => m + (f.x -> f.τ)},
+          m(c.supercn)._2 ++
+            c.methods.foldLeft(Map.empty[MethodName, Method]) { (m:MethodMap, mm:Method) => m + (mm.mn -> mm)}
           )
         )
     }
   }
 
   def getFirstClassName(): ClassName = {
-    class_map.head._1
+    first_class
   }
 
 }
@@ -82,7 +86,7 @@ sealed abstract class Value {
   def −( v:Value ): Value = sys.error("undefined behavior")
   def ×( v:Value ): Value = sys.error("undefined behavior")
   def ÷( v:Value ): Value = sys.error("undefined behavior")
-  def <( v:Value ): Value = sys.error("undefined behavior")
+  def <( v:Value ): Value = sys.error("undefined behavior ")
   def ≤( v:Value ): Value = sys.error("undefined behavior")
   def ∧( v:Value ): Value = sys.error("undefined behavior")
   def ∨( v:Value ): Value = sys.error("undefined behavior")

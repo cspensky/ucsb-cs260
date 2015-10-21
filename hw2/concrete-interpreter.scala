@@ -25,6 +25,8 @@ object Concrete {
           // throws Illtyped exception if program is not well-typed
           Typechecker.typecheck(ast, classTable)
 
+          if (DEBUG) println(ast)
+
           // program is well-formed and well-typed; ready to interpret
           var curr_ς = initstate(ast)
 
@@ -140,7 +142,8 @@ case class State(/* θ is a global now */ so: Option[Stmt], ρ: Locals, heap: He
 
             // Rule 3
             case Call(x, e, mn, args) =>
-              if (DEBUG) println("Call "+x+"."+e+" "+mn+" "+args)
+              if (DEBUG) println("Call "+x+"."+e+" "+mn+" "+args+"=>"+args.map(η(_)))
+//              println(heap);
               // Evaluate our expression
               val exp_val = η(e)
               exp_val match {
@@ -148,7 +151,7 @@ case class State(/* θ is a global now */ so: Option[Stmt], ρ: Locals, heap: He
                   // do a function call
                   call(x, addr, heap, mn, args.map(η(_)), ρ, κs)
                 case _ =>
-                  sys.error("undefined behavior")
+                  sys.error("undefined behavior  (Called object resolved to "+exp_val+")")
 
               }
 
