@@ -201,7 +201,8 @@ case class State(/* θ is a global now */ so: Option[Stmt], ρ: Locals, heap: He
               }
 
             case Print(e) =>
-              println(e+": "+η(e))
+              if (DEBUG) println(e+": "+η(e))
+              else println(η(e))
               State(None, ρ, heap, κs)
           }
 
