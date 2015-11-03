@@ -1,5 +1,5 @@
 class If {
-  def If(x: string, y: string) = {
+  def If(x: string, y: string, z: string) = {
     x := {"alice","bob"};
 
     if (x = "alice") { y := x + x; } 
@@ -7,5 +7,6 @@ class If {
 
     print x;
     print y;
+	print z;
   }
 }

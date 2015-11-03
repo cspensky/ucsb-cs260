@@ -33,6 +33,10 @@ class Signs {
     print b * c; ## 0 ##
     print b * d; ## 0 ##
     print c * d; ## ⊤ ##
+    print a;
+    print b;
+    print c;
+    print d;
     print a = a; ## {true, false} ##
     print a = b; ## false ##
     print a = c; ## false ##
@@ -51,7 +55,7 @@ class Signs {
     print d - a; ## ⊤ ##
     print b - c; ## - ##
     print c - b; ## + ##
-    print b - d; ## ⊤ ##
+	print b - d; ## ⊤ ##
     print d - b; ## ⊤ ##
     print c - d; ## ⊤ ##
     print d - c; ## ⊤ ##
@@ -63,7 +67,7 @@ class Signs {
     print d / a; ## ⊤ ##
     print b / c; ## 0 ##
     print c / b; ## ⊥ ##
-    print b / d; ## 0 ##
+	print b / d; ## 0 ##
     print d / b; ## ⊤ ##
     print c / d; ## ⊤ ##
     print d / c; ## ⊤ ##
@@ -84,7 +88,7 @@ class Signs {
     print a <= c; ## true ##
     print c <= a; ## false ##
     print a <= d; ## {true, false} ##
-    print d <= a; ## {true, false} ##
+	print d <= a; ## {true, false} ##
     print b <= c; ## true ##
     print c <= b; ## false ##
     print b <= d; ## {true, false} ##

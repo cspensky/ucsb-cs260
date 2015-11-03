@@ -5,6 +5,8 @@ import cs260.lwnn.util._
 
 import TypeAliases._
 
+import scala.collection.immutable.{SortedSet, ListMap}
+
 //——————————————————————————————————————————————————————————————————————————————
 // ClassDefs
 //
@@ -16,15 +18,50 @@ case object θ {
   type FieldMap = Map[Var, Type]
   type MethodMap = Map[MethodName, Method]
 
-  // ... (same as for the concrete semantics)
+  var class_map = Map.empty[ClassName, (FieldMap, MethodMap)]
+  var first_class = "TopClass"
+
+  def apply( cn:ClassName ): (FieldMap, MethodMap) = {
+    class_map(cn)
+  }
+
+  def init( prog:Program): Unit = {
+    first_class = prog.classes.head.cn
+    class_map = prog.classes.foldLeft(Map("TopClass" ->
+      (Map().asInstanceOf[FieldMap], Map().asInstanceOf[MethodMap]) )) { (m, c:Class) =>
+      m + (c.cn ->
+        (
+          m(c.supercn)._1 ++
+            c.fields.foldLeft(Map.empty[Var, Type]) { (m:FieldMap, f:Decl) => m + (f.x -> f.τ)},
+          m(c.supercn)._2 ++
+            c.methods.foldLeft(Map.empty[MethodName, Method]) { (m:MethodMap, mm:Method) => m + (mm.mn -> mm)}
+          )
+        )
+    }
+  }
+
+  def getFirstClassName(): ClassName = {
+    first_class
+  }
+
 }
 
 
 //——————————————————————————————————————————————————————————————————————————————
 // Locals
 
-case class Locals( /* ... */ ) {
-  // ...
+case class Locals( var_to_value:ListMap[Var, Value] ) {
+  // Store our locals which map Variable to Values
+
+  def apply( x:Var ): Value =
+    var_to_value(x)
+
+  def +( new_var_value:(Var, Value) ): Locals = {
+    // We can only assign new values, but shouldn't be adding new vars
+    assert( var_to_value contains new_var_value._1)
+    Locals( var_to_value + new_var_value )
+
+  }
 }
 
 //——————————————————————————————————————————————————————————————————————————————
@@ -39,8 +76,35 @@ case class Locals( /* ... */ ) {
 // continuation stacks) and two different methods for updating the
 // heap (ditto).
 
-case class Heap( /* ... */ ) {
-  // ...
+case class Heap( address_to_obj:Map[Address, Object] ,
+                 address_to_kont:Map[Address, Set[Seq[Kont]]]) {
+  // Map map addresses to objects
+
+  def getObj( addr:Address ): Object =
+    address_to_obj(addr)
+
+  def addObj( new_heap_obj:(Address,Object) ): Heap = {
+    new Heap( address_to_obj + new_heap_obj, address_to_kont)
+  }
+
+  // Map addresses to Konts
+
+  def getKont( addr:Address ): Set[Seq[Kont]] =
+    address_to_kont(addr)
+
+  def addKont( new_heap_obj:(Address, Seq[Kont] )): Heap = {
+    if (address_to_kont contains new_heap_obj._1) {
+      Heap(address_to_obj, address_to_kont + (new_heap_obj._1 -> (
+        address_to_kont(new_heap_obj._1) + new_heap_obj._2)
+        )
+      )
+    } else {
+      Heap(address_to_obj,
+        address_to_kont + (new_heap_obj._1 -> Set(new_heap_obj._2))
+      )
+
+    }
+  }
 }
 
 //——————————————————————————————————————————————————————————————————————————————
@@ -80,23 +144,34 @@ sealed abstract class ℤ extends Value
 //
 //  Top
 //
-class ℤ_top extends ℤ {
+case class ℤ_top extends ℤ {
 
   def is_⊥ : Boolean = false
 
-  def ⊔( v:Value ): ℤ = new ℤ_top()
+  def ⊔( v:Value ): ℤ =
+    v match {
+      case a:ℤ_bot => new ℤ_bot()
+      case _ => new ℤ_top()
+    }
 
   def +( v:Value ): ℤ = new ℤ_top()
 
   def −( v:Value ): ℤ = new ℤ_top()
 
-  def ×( v:Value ): ℤ = new ℤ_top()
+  def ×( v:Value ): ℤ = v match {
+    case a:ℤ_pos => new ℤ_top()
+    case a:ℤ_zero => new ℤ_zero()
+    case a:ℤ_neg =>new ℤ_top()
+    case a:ℤ_bot => new ℤ_bot()
+    case a:ℤ_top => new ℤ_top()
+    case _ => sys.error("undefined behavior. (Type mismatch)")
+  }
 
   def ÷( v:Value ): ℤ = new ℤ_top()
 
   def <( v:Value ): Bool = new Bool(Set(true, false))
 
-  def ≤( v:Value): Bool = new Bool(Set(true))
+  def ≤( v:Value): Bool = new Bool(Set(true,false))
 
   def ∧( v:Value ): ℤ = new ℤ_top()
 
@@ -104,324 +179,31 @@ class ℤ_top extends ℤ {
 
   def ≈( v:Value ): Bool =
     v match {
-      case ℤ_top => new Bool(Set(true))
-      case _ => new Bool(Set(false))
+      case a:ℤ_pos => new Bool(Set(true,false))
+      case a:ℤ_zero => new Bool(Set(true,false))
+      case a:ℤ_neg => new Bool(Set(true,false))
+      case a:ℤ_bot => new Bool(Set(false))
+      case a:ℤ_top => new Bool(Set(true,false))
+      case _ => sys.error("undefined behavior. (Type mismatch)")
     }
 
   def ≠( v:Value ): Bool =
     v match {
-      case ℤ_top => new Bool(Set(false))
-      case _ => new Bool(Set(true))
-    }
-}
-
-//
-//  POS +
-//
-class ℤ_pos extends ℤ {
-  def is_⊥ : Boolean = false
-
-  def ⊔( v:Value ): ℤ =
-    v match {
-      case ℤ_pos => new ℤ_pos()
-      case ℤ_neg => new ℤ_top()
-      case ℤ_zero => new ℤ_top()
-      case ℤ_top => new ℤ_top()
-      case ℤ_bot => new ℤ_bot()
+      case a:ℤ_pos => new Bool(Set(true,false))
+      case a:ℤ_zero => new Bool(Set(true,false))
+      case a:ℤ_neg => new Bool(Set(true,false))
+      case a:ℤ_bot => new Bool(Set(true))
+      case a:ℤ_top => new Bool(Set(true,false))
+      case _ => sys.error("undefined behavior. (Type mismatch)")
     }
 
-  def +( v:Value ): ℤ =
-    v match {
-      case ℤ_pos => new ℤ_pos()
-      case ℤ_zero => new ℤ_pos()
-      case ℤ_neg => new ℤ_top()
-      case ℤ_bot => new ℤ_bot()
-      case ℤ_top => new ℤ_top()
-    }
-
-  def −( v:Value ): ℤ =
-    v match {
-      case ℤ_pos => new ℤ_top()
-      case ℤ_neg => new ℤ_pos()
-      case ℤ_zero => new ℤ_pos()
-      case ℤ_top => new ℤ_top()
-      case ℤ_bot => new ℤ_bot()
-    }
-
-  def ×( v:Value ): ℤ =
-    v match {
-      case ℤ_pos => new ℤ_pos()
-      case ℤ_neg => new ℤ_neg()
-      case ℤ_zero => new ℤ_zero()
-      case ℤ_top => new ℤ_top()
-      case ℤ_bot => new ℤ_bot()
-    }
-
-  def ÷( v:Value ): ℤ =
-    v match {
-        // Could be 1/3 => 0 in integer division (Assume we always round up)
-      case ℤ_pos => new ℤ_pos()
-      case ℤ_neg => new ℤ_neg()
-      case ℤ_zero => sys.error("undefined behavior. (Divide by 0)")
-      case ℤ_top => new ℤ_top()
-      case ℤ_bot => new ℤ_bot()
-    }
-
-  def <( v:Value ): Bool =
-    v match {
-      case ℤ_pos => new Bool(Set(true, false)) // Who knows
-      case ℤ_neg => new Bool(Set(false))
-      case ℤ_zero => new Bool(Set(false))
-      case ℤ_top => new Bool(Set(true,false)) // Doesn't make sense
-      case ℤ_bot => new Bool(Set(true,false)) // Doesn't make sense
-    }
-
-  def ≤( v:Value): Bool =
-    v match {
-      case ℤ_pos => new Bool(Set(true, false)) // Who knows
-      case ℤ_neg => new Bool(Set(false))
-      case ℤ_zero => new Bool(Set(false))
-      case ℤ_top => new Bool(Set(true,false)) // Doesn't make sense
-      case ℤ_bot => new Bool(Set(true,false)) // Doesn't make sense
-    }
-
-  def ∧( v:Value ): ℤ =
-    v match {
-      case ℤ_pos => new ℤ_pos()
-      case ℤ_neg => new ℤ_pos()
-      case ℤ_zero => new ℤ_zero()
-      case ℤ_top => new ℤ_top()
-      case ℤ_bot => new ℤ_bot()
-    }
-
-  def ∨( v:Value ): ℤ =
-    v match {
-      case ℤ_pos => new ℤ_pos()
-      case ℤ_neg => new ℤ_neg()
-      case ℤ_zero => new ℤ_pos()
-      case ℤ_top => new ℤ_top()
-      case ℤ_bot => new ℤ_bot()
-    }
-
-  def ≈( v:Value ): Bool =
-    v match {
-      case ℤ_pos => new Bool(Set(true))
-      case _ => new Bool(Set(false))
-    }
-
-  def ≠( v:Value ): Bool =
-    v match {
-      case ℤ_pos => new Bool(Set(false))
-      case _ => new Bool(Set(true))
-    }
-}
-
-//
-//  NEG -
-//
-class ℤ_neg extends ℤ {
-  def is_⊥ : Boolean = false
-
-  def ⊔( v:Value ): ℤ =
-    v match {
-      case ℤ_pos => new ℤ_top()
-      case ℤ_neg => new ℤ_neg()
-      case ℤ_zero => new ℤ_top()
-      case ℤ_top => new ℤ_top()
-      case ℤ_bot => new ℤ_bot()
-    }
-
-  def +( v:Value ): ℤ =
-    v match {
-      case ℤ_pos => new ℤ_top()
-      case ℤ_zero => new ℤ_neg()
-      case ℤ_neg => new ℤ_neg()
-      case ℤ_bot => new ℤ_bot()
-      case ℤ_top => new ℤ_top()
-    }
-
-  def −( v:Value ): ℤ =
-    v match {
-      case ℤ_pos => new ℤ_neg()
-      case ℤ_neg => new ℤ_top()
-      case ℤ_zero => new ℤ_neg()
-      case ℤ_top => new ℤ_top()
-      case ℤ_bot => new ℤ_bot()
-    }
-
-  def ×( v:Value ): ℤ =
-    v match {
-      case ℤ_pos => new ℤ_neg()
-      case ℤ_neg => new ℤ_pos()
-      case ℤ_zero => new ℤ_zero()
-      case ℤ_top => new ℤ_top()
-      case ℤ_bot => new ℤ_bot()
-    }
-
-  def ÷( v:Value ): ℤ =
-    v match {
-      // Could be 1/3 => 0 in integer division (Assume we always round up)
-      case ℤ_pos => new ℤ_neg()
-      case ℤ_neg => new ℤ_pos()
-      case ℤ_zero => sys.error("undefined behavior. (Divide by 0)")
-      case ℤ_top => new ℤ_top()
-      case ℤ_bot => new ℤ_bot()
-    }
-
-  def <( v:Value ): Bool =
-    v match {
-      case ℤ_pos => new Bool(Set(true)) // Who knows
-      case ℤ_neg => new Bool(Set(true, false))
-      case ℤ_zero => new Bool(Set(true))
-      case ℤ_top => new Bool(Set(true,false)) // Doesn't make sense
-      case ℤ_bot => new Bool(Set(true,false)) // Doesn't make sense
-    }
-
-  def ≤( v:Value): Bool =
-    v match {
-      case ℤ_pos => new Bool(Set(true)) // Who knows
-      case ℤ_neg => new Bool(Set(true,false))
-      case ℤ_zero => new Bool(Set(true))
-      case ℤ_top => new Bool(Set(true,false)) // Doesn't make sense
-      case ℤ_bot => new Bool(Set(true,false)) // Doesn't make sense
-    }
-
-  def ∧( v:Value ): ℤ =
-    v match {
-      case ℤ_pos => new ℤ_pos()
-      case ℤ_neg => new ℤ_neg()
-      case ℤ_zero => new ℤ_zero()
-      case ℤ_top => new ℤ_top()
-      case ℤ_bot => new ℤ_bot()
-    }
-
-  def ∨( v:Value ): ℤ =
-    v match {
-      case ℤ_pos => new ℤ_neg()
-      case ℤ_neg => new ℤ_neg()
-      case ℤ_zero => new ℤ_neg()
-      case ℤ_top => new ℤ_top()
-      case ℤ_bot => new ℤ_bot()
-    }
-
-  def ≈( v:Value ): Bool =
-    v match {
-      case ℤ_neg => new Bool(Set(true))
-      case _ => new Bool(Set(false))
-    }
-
-  def ≠( v:Value ): Bool =
-    v match {
-      case ℤ_top => new Bool(Set(false))
-      case _ => new Bool(Set(true))
-    }
-}
-
-//
-//  ZERO 0
-//
-class ℤ_zero extends ℤ {
-  def is_⊥ : Boolean = false
-
-  def ⊔( v:Value ): ℤ =
-    v match {
-      case ℤ_pos => new ℤ_top()
-      case ℤ_neg => new ℤ_top()
-      case ℤ_zero => new ℤ_zero()
-      case ℤ_top => new ℤ_top()
-      case ℤ_bot => new ℤ_bot()
-    }
-
-  def +( v:Value ): ℤ =
-    v match {
-      case ℤ_pos => new ℤ_pos()
-      case ℤ_zero => new ℤ_zero()
-      case ℤ_neg => new ℤ_neg()
-      case ℤ_bot => new ℤ_bot()
-      case ℤ_top => new ℤ_top()
-    }
-
-  def −( v:Value ): ℤ =
-    v match {
-      case ℤ_pos => new ℤ_neg()
-      case ℤ_neg => new ℤ_pos()
-      case ℤ_zero => new ℤ_zero()
-      case ℤ_top => new ℤ_top()
-      case ℤ_bot => new ℤ_bot()
-    }
-
-  def ×( v:Value ): ℤ =
-    v match {
-      case ℤ_pos => new ℤ_zero()
-      case ℤ_neg => new ℤ_zero()
-      case ℤ_zero => new ℤ_zero()
-      case ℤ_top => new ℤ_top()
-      case ℤ_bot => new ℤ_bot()
-    }
-
-  def ÷( v:Value ): ℤ =
-    v match {
-      // Could be 1/3 => 0 in integer division (Assume we always round up)
-      case ℤ_pos => new ℤ_zero()
-      case ℤ_neg => new ℤ_zero()
-      case ℤ_zero => sys.error("undefined behavior. (Divide by 0)")
-      case ℤ_top => new ℤ_top()
-      case ℤ_bot => new ℤ_bot()
-    }
-
-  def <( v:Value ): Bool =
-    v match {
-      case ℤ_pos => new Bool(Set(true)) // Who knows
-      case ℤ_neg => new Bool(Set(false))
-      case ℤ_zero => new Bool(Set(false))
-      case ℤ_top => new Bool(Set(true,false)) // Doesn't make sense
-      case ℤ_bot => new Bool(Set(true,false)) // Doesn't make sense
-    }
-
-  def ≤( v:Value): Bool =
-    v match {
-      case ℤ_pos => new Bool(Set(true)) // Who knows
-      case ℤ_neg => new Bool(Set(false))
-      case ℤ_zero => new Bool(Set(true))
-      case ℤ_top => new Bool(Set(true,false)) // Doesn't make sense
-      case ℤ_bot => new Bool(Set(true,false)) // Doesn't make sense
-    }
-
-  def ∧( v:Value ): ℤ =
-    v match {
-      case ℤ_pos => new ℤ_zero()
-      case ℤ_neg => new ℤ_zero()
-      case ℤ_zero => new ℤ_zero()
-      case ℤ_top => new ℤ_top()
-      case ℤ_bot => new ℤ_bot()
-    }
-
-  def ∨( v:Value ): ℤ =
-    v match {
-      case ℤ_pos => new ℤ_pos()
-      case ℤ_neg => new ℤ_neg()
-      case ℤ_zero => new ℤ_zero()
-      case ℤ_top => new ℤ_top()
-      case ℤ_bot => new ℤ_bot()
-    }
-
-  def ≈( v:Value ): Bool =
-    v match {
-      case ℤ_zero => new Bool(Set(true))
-      case _ => new Bool(Set(false))
-    }
-
-  def ≠( v:Value ): Bool =
-    v match {
-      case ℤ_zero => new Bool(Set(false))
-      case _ => new Bool(Set(true))
-    }
+  override def toString = "ℤ_⊤"
 }
 
 //
 //  BOTTOM _|_
 //
-class ℤ_bot extends ℤ {
+case class ℤ_bot extends ℤ {
 
   def is_⊥ : Boolean = true
 
@@ -445,15 +227,377 @@ class ℤ_bot extends ℤ {
 
   def ≈( v:Value ): Bool =
     v match {
-      case ℤ_bot => new Bool(Set(true))
+      case a:ℤ_bot => new Bool(Set(true))
       case _ => new Bool(Set(false))
     }
 
   def ≠( v:Value ): Bool =
     v match {
-      case ℤ_bot => new Bool(Set(false))
+      case a:ℤ_bot => new Bool(Set(false))
       case _ => new Bool(Set(true))
     }
+
+  override def toString = "ℤ_⊥"
+}
+
+//
+//  POS +
+//
+case class ℤ_pos extends ℤ {
+  def is_⊥ : Boolean = false
+
+  def ⊔( v:Value ): ℤ =
+    v match {
+      case a:ℤ_pos => new ℤ_pos()
+      case a:ℤ_neg => new ℤ_top()
+      case a:ℤ_zero => new ℤ_top()
+      case a:ℤ_top => new ℤ_top()
+      case a:ℤ_bot => new ℤ_bot()
+      case _ => sys.error("undefined behavior. (Type mismatch)")
+    }
+
+  def +( v:Value ): ℤ =
+    v match {
+      case a:ℤ_pos => new ℤ_pos()
+      case a:ℤ_zero => new ℤ_pos()
+      case a:ℤ_neg => new ℤ_top()
+      case a:ℤ_bot => new ℤ_bot()
+      case a:ℤ_top => new ℤ_top()
+      case _ => sys.error("undefined behavior. (Type mismatch)")
+    }
+
+  def −( v:Value ): ℤ =
+    v match {
+      case a:ℤ_pos => new ℤ_top()
+      case a:ℤ_neg => new ℤ_pos()
+      case a:ℤ_zero => new ℤ_pos()
+      case a:ℤ_top => new ℤ_top()
+      case a:ℤ_bot => new ℤ_bot()
+      case _ => sys.error("undefined behavior. (Type mismatch)")
+    }
+
+  def ×( v:Value ): ℤ =
+    v match {
+      case a:ℤ_pos => new ℤ_pos()
+      case a:ℤ_neg => new ℤ_neg()
+      case a:ℤ_zero => new ℤ_zero()
+      case a:ℤ_top => new ℤ_top()
+      case a:ℤ_bot => new ℤ_bot()
+      case _ => sys.error("undefined behavior. (Type mismatch)")
+    }
+
+  def ÷( v:Value ): ℤ =
+    v match {
+        // Could be 1/3 => 0 in integer division (Assume we always round up)
+      case a:ℤ_pos => new ℤ_pos()
+      case a:ℤ_neg => new ℤ_neg()
+      case a:ℤ_zero => new ℤ_bot() //sys.error("undefined behavior. (Divide by 0)")
+      case a:ℤ_top => new ℤ_top()
+      case a:ℤ_bot => new ℤ_bot()
+      case _ => sys.error("undefined behavior. (Type mismatch)")
+    }
+
+  def <( v:Value ): Bool =
+    v match {
+      case a:ℤ_pos => new Bool(Set(true, false)) // Who knows
+      case a:ℤ_neg => new Bool(Set(false))
+      case a:ℤ_zero => new Bool(Set(false))
+      case a:ℤ_top => new Bool(Set(true,false)) // Doesn't make sense
+      case a:ℤ_bot => new Bool(Set(true,false)) // Doesn't make sense
+      case _ => sys.error("undefined behavior. (Type mismatch)")
+    }
+
+  def ≤( v:Value): Bool =
+    v match {
+      case a:ℤ_pos => new Bool(Set(true, false)) // Who knows
+      case a:ℤ_neg => new Bool(Set(false))
+      case a:ℤ_zero => new Bool(Set(false))
+      case a:ℤ_top => new Bool(Set(true,false)) // Doesn't make sense
+      case a:ℤ_bot => new Bool(Set(true,false)) // Doesn't make sense
+      case _ => sys.error("undefined behavior. (Type mismatch)")
+    }
+
+  def ∧( v:Value ): ℤ =
+    v match {
+      case a:ℤ_pos => new ℤ_pos()
+      case a:ℤ_neg => new ℤ_pos()
+      case a:ℤ_zero => new ℤ_zero()
+      case a:ℤ_top => new ℤ_top()
+      case a:ℤ_bot => new ℤ_bot()
+      case _ => sys.error("undefined behavior. (Type mismatch)")
+    }
+
+  def ∨( v:Value ): ℤ =
+    v match {
+      case a:ℤ_pos => new ℤ_pos()
+      case a:ℤ_neg => new ℤ_neg()
+      case a:ℤ_zero => new ℤ_pos()
+      case a:ℤ_top => new ℤ_top()
+      case a:ℤ_bot => new ℤ_bot()
+      case _ => sys.error("undefined behavior. (Type mismatch)")
+    }
+
+  def ≈( v:Value ): Bool =
+    v match {
+      case a:ℤ_pos => new Bool(Set(true,false))
+      case a:ℤ_zero => new Bool(Set(false))
+      case a:ℤ_neg => new Bool(Set(false))
+      case a:ℤ_bot => new Bool(Set(false))
+      case a:ℤ_top => new Bool(Set(true,false))
+      case _ => sys.error("undefined behavior. (Type mismatch)")
+    }
+
+  def ≠( v:Value ): Bool =
+    v match {
+      case a:ℤ_pos => new Bool(Set(true,false))
+      case a:ℤ_zero => new Bool(Set(true))
+      case a:ℤ_neg => new Bool(Set(true))
+      case a:ℤ_bot => new Bool(Set(true))
+      case a:ℤ_top => new Bool(Set(true,false))
+      case _ => sys.error("undefined behavior. (Type mismatch)")
+    }
+
+  override def toString = "ℤ_+"
+}
+
+//
+//  NEG -
+//
+case class ℤ_neg extends ℤ {
+  def is_⊥ : Boolean = false
+
+  def ⊔( v:Value ): ℤ =
+    v match {
+      case a:ℤ_pos => new ℤ_top()
+      case a:ℤ_neg => new ℤ_neg()
+      case a:ℤ_zero => new ℤ_top()
+      case a:ℤ_top => new ℤ_top()
+      case a:ℤ_bot => new ℤ_bot()
+      case _ => sys.error("undefined behavior. (Type mismatch)")
+    }
+
+  def +( v:Value ): ℤ =
+    v match {
+      case a:ℤ_pos => new ℤ_top()
+      case a:ℤ_zero => new ℤ_neg()
+      case a:ℤ_neg => new ℤ_neg()
+      case a:ℤ_bot => new ℤ_bot()
+      case a:ℤ_top => new ℤ_top()
+      case _ => sys.error("undefined behavior. (Type mismatch)")
+    }
+
+  def −( v:Value ): ℤ =
+    v match {
+      case a:ℤ_pos => new ℤ_neg()
+      case a:ℤ_neg => new ℤ_top()
+      case a:ℤ_zero => new ℤ_neg()
+      case a:ℤ_top => new ℤ_top()
+      case a:ℤ_bot => new ℤ_bot()
+      case _ => sys.error("undefined behavior. (Type mismatch)")
+    }
+
+  def ×( v:Value ): ℤ =
+    v match {
+      case a:ℤ_pos => new ℤ_neg()
+      case a:ℤ_neg => new ℤ_pos()
+      case a:ℤ_zero => new ℤ_zero()
+      case a:ℤ_top => new ℤ_top()
+      case a:ℤ_bot => new ℤ_bot()
+      case _ => sys.error("undefined behavior. (Type mismatch)")
+    }
+
+  def ÷( v:Value ): ℤ =
+    v match {
+      // Could be 1/3 => 0 in integer division (Assume we always round up)
+      case a:ℤ_pos => new ℤ_neg()
+      case a:ℤ_neg => new ℤ_pos()
+      case a:ℤ_zero => new ℤ_bot() //sys.error("undefined behavior. (Divide by 0)")
+      case a:ℤ_top => new ℤ_top()
+      case a:ℤ_bot => new ℤ_bot()
+      case _ => sys.error("undefined behavior. (Type mismatch)")
+    }
+
+  def <( v:Value ): Bool =
+    v match {
+      case a:ℤ_pos => new Bool(Set(true)) // Who knows
+      case a:ℤ_neg => new Bool(Set(true, false))
+      case a:ℤ_zero => new Bool(Set(true))
+      case a:ℤ_top => new Bool(Set(true,false)) // Doesn't make sense
+      case a:ℤ_bot => new Bool(Set(true,false)) // Doesn't make sense
+      case _ => sys.error("undefined behavior. (Type mismatch)")
+    }
+
+  def ≤( v:Value): Bool =
+    v match {
+      case a:ℤ_pos => new Bool(Set(true)) // Who knows
+      case a:ℤ_neg => new Bool(Set(true,false))
+      case a:ℤ_zero => new Bool(Set(true))
+      case a:ℤ_top => new Bool(Set(true,false)) // Doesn't make sense
+      case a:ℤ_bot => new Bool(Set(true,false)) // Doesn't make sense
+      case _ => sys.error("undefined behavior. (Type mismatch)")
+    }
+
+  def ∧( v:Value ): ℤ =
+    v match {
+      case a:ℤ_pos => new ℤ_pos()
+      case a:ℤ_neg => new ℤ_neg()
+      case a:ℤ_zero => new ℤ_zero()
+      case a:ℤ_top => new ℤ_top()
+      case a:ℤ_bot => new ℤ_bot()
+      case _ => sys.error("undefined behavior. (Type mismatch)")
+    }
+
+  def ∨( v:Value ): ℤ =
+    v match {
+      case a:ℤ_pos => new ℤ_neg()
+      case a:ℤ_neg => new ℤ_neg()
+      case a:ℤ_zero => new ℤ_neg()
+      case a:ℤ_top => new ℤ_top()
+      case a:ℤ_bot => new ℤ_bot()
+      case _ => sys.error("undefined behavior. (Type mismatch)")
+    }
+
+  def ≈( v:Value ): Bool =
+    v match {
+      case a:ℤ_pos => new Bool(Set(false))
+      case a:ℤ_zero => new Bool(Set(false))
+      case a:ℤ_neg => new Bool(Set(true,false))
+      case a:ℤ_bot => new Bool(Set(false))
+      case a:ℤ_top => new Bool(Set(true,false))
+      case _ => sys.error("undefined behavior. (Type mismatch)")
+    }
+
+  def ≠( v:Value ): Bool =
+    v match {
+      case a:ℤ_pos => new Bool(Set(true))
+      case a:ℤ_zero => new Bool(Set(true))
+      case a:ℤ_neg => new Bool(Set(true,false))
+      case a:ℤ_bot => new Bool(Set(true))
+      case a:ℤ_top => new Bool(Set(true,false))
+      case _ => sys.error("undefined behavior. (Type mismatch)")
+    }
+
+  override def toString = "ℤ_-"
+}
+
+//
+//  ZERO 0
+//
+case class ℤ_zero extends ℤ {
+  def is_⊥ : Boolean = false
+
+  def ⊔( v:Value ): ℤ =
+    v match {
+      case a:ℤ_pos => new ℤ_top()
+      case a:ℤ_neg => new ℤ_top()
+      case a:ℤ_zero => new ℤ_zero()
+      case a:ℤ_top => new ℤ_top()
+      case a:ℤ_bot => new ℤ_bot()
+      case _ => sys.error("undefined behavior. (Type mismatch)")
+    }
+
+  def +( v:Value ): ℤ =
+    v match {
+      case a:ℤ_pos => new ℤ_pos()
+      case a:ℤ_zero => new ℤ_zero()
+      case a:ℤ_neg => new ℤ_neg()
+      case a:ℤ_bot => new ℤ_bot()
+      case a:ℤ_top => new ℤ_top()
+      case _ => sys.error("undefined behavior. (Type mismatch)")
+    }
+
+  def −( v:Value ): ℤ =
+    v match {
+      case a:ℤ_pos => new ℤ_neg()
+      case a:ℤ_neg => new ℤ_pos()
+      case a:ℤ_zero => new ℤ_zero()
+      case a:ℤ_top => new ℤ_top()
+      case a:ℤ_bot => new ℤ_bot()
+      case _ => sys.error("undefined behavior. (Type mismatch)")
+    }
+
+  def ×( v:Value ): ℤ =
+    v match {
+      case a:ℤ_pos => new ℤ_zero()
+      case a:ℤ_neg => new ℤ_zero()
+      case a:ℤ_zero => new ℤ_zero()
+      case a:ℤ_top => new ℤ_zero()
+      case a:ℤ_bot => new ℤ_bot()
+      case _ => sys.error("undefined behavior. (Type mismatch)")
+    }
+
+  def ÷( v:Value ): ℤ =
+    v match {
+      // Could be 1/3 => 0 in integer division (Assume we always round up)
+      case a:ℤ_pos => new ℤ_zero()
+      case a:ℤ_neg => new ℤ_zero()
+      case a:ℤ_zero => new ℤ_bot() //sys.error("undefined behavior. (Divide by 0)")
+      case a:ℤ_top => new ℤ_zero()
+      case a:ℤ_bot => new ℤ_bot()
+      case _ => sys.error("undefined behavior. (Type mismatch)")
+    }
+
+  def <( v:Value ): Bool =
+    v match {
+      case a:ℤ_pos => new Bool(Set(true)) // Who knows
+      case a:ℤ_neg => new Bool(Set(false))
+      case a:ℤ_zero => new Bool(Set(false))
+      case a:ℤ_top => new Bool(Set(true,false)) // Doesn't make sense
+      case a:ℤ_bot => new Bool(Set(true,false)) // Doesn't make sense
+      case _ => sys.error("undefined behavior. (Type mismatch)")
+    }
+
+  def ≤( v:Value): Bool =
+    v match {
+      case a:ℤ_pos => new Bool(Set(true)) // Who knows
+      case a:ℤ_neg => new Bool(Set(false))
+      case a:ℤ_zero => new Bool(Set(true))
+      case a:ℤ_top => new Bool(Set(true,false)) // Doesn't make sense
+      case a:ℤ_bot => new Bool(Set(true,false)) // Doesn't make sense
+      case _ => sys.error("undefined behavior. (Type mismatch)")
+    }
+
+  def ∧( v:Value ): ℤ =
+    v match {
+      case a:ℤ_pos => new ℤ_zero()
+      case a:ℤ_neg => new ℤ_zero()
+      case a:ℤ_zero => new ℤ_zero()
+      case a:ℤ_top => new ℤ_top()
+      case a:ℤ_bot => new ℤ_bot()
+      case _ => sys.error("undefined behavior. (Type mismatch)")
+    }
+
+  def ∨( v:Value ): ℤ =
+    v match {
+      case a:ℤ_pos => new ℤ_pos()
+      case a:ℤ_neg => new ℤ_neg()
+      case a:ℤ_zero => new ℤ_zero()
+      case a:ℤ_top => new ℤ_top()
+      case a:ℤ_bot => new ℤ_bot()
+      case _ => sys.error("undefined behavior. (Type mismatch)")
+    }
+
+  def ≈( v:Value ): Bool =
+    v match {
+      case a:ℤ_pos => new Bool(Set(false))
+      case a:ℤ_zero => new Bool(Set(true))
+      case a:ℤ_neg => new Bool(Set(false))
+      case a:ℤ_bot => new Bool(Set(false))
+      case a:ℤ_top => new Bool(Set(true,false))
+      case _ => sys.error("undefined behavior. (Type mismatch)")
+    }
+
+  def ≠( v:Value ): Bool =
+    v match {
+      case a:ℤ_pos => new Bool(Set(true))
+      case a:ℤ_zero => new Bool(Set(false))
+      case a:ℤ_neg => new Bool(Set(true))
+      case a:ℤ_bot => new Bool(Set(true))
+      case a:ℤ_top => new Bool(Set(true,false))
+      case _ => sys.error("undefined behavior. (Type mismatch)")
+    }
+
+  override def toString = "ℤ_0"
 }
 
 object ℤ {
@@ -467,40 +611,49 @@ object ℤ {
       new ℤ_bot()
     else {
       // Map everything to Z
-      ns.map(x => if (x.equals(BigInt(0))) 0
-      else if (x < 0) -1
-      else if (x > 0) 1)
+      val signs = ns.map(x =>
+        if (x.equals(BigInt(0))) 0
+        else if (x < 0) -1
+        else 1):Set[Int]
 
       // More than one element left?
-      if (ns.size > 1)
+      if (signs.size > 1) {
         new ℤ_top()
-
-      // They must all be the same, what are they?
-      ns.head match {
-        case 1 =>
-          new ℤ_pos()
-        case -1 =>
-          new ℤ_neg()
-        case 0 =>
-          new ℤ_zero()
+      } else {
+        // They must all be the same, what are they?
+        signs.head match {
+          case 1 =>
+            new ℤ_pos()
+          case -1 =>
+            new ℤ_neg()
+          case 0 =>
+            new ℤ_zero()
+        }
       }
     }
 }
 
 // we'll use the (𝒫({true, false}), ⊆) abstract domain.
-class Bool( bs:Set[Boolean] ) extends Value {
+case class Bool( bs:Set[Boolean] ) extends Value {
+
+//  def unapply(bs:Set[Boolean]) = Some(bs)
 
   def is_⊥ : Boolean =
     bs match {
-      case ⊥ => true
+      case Bool.⊥ => true
       case _ => false
     }
 
-  def ⊔( v:Bool ): Bool =
-  v match {
-    case ⊥ => ⊥
-    case ⊤ => ⊤
-    case _ => new Bool(v.bs ++ bs)
+  def contains( b:Boolean ): Boolean = bs contains b
+
+  def ⊔( v:Value ): Bool = {
+    v match {
+      case b:Bool => if (b.is_⊥)
+          new Bool(Bool.⊥)
+        else
+          new Bool(bs ++ b.bs)
+      case _ => sys.error("undefined behavior. (Type Mismatch)")
+    }
   }
   def +( v:Value ): Bool = sys.error("undefined behavior. (Adding bools)")
 
@@ -543,6 +696,7 @@ class Bool( bs:Set[Boolean] ) extends Value {
     else if (bs.size == 1) bs.head.toString
     else "{true, false}"
   }
+
 }
 
 object Bool {
@@ -553,13 +707,16 @@ object Bool {
 
   def α( bs:Set[Boolean] ): Bool =
     bs match {
-      case ⊤ => Bool(⊤)
-      case ⊥ => Bool(⊥)
-      case True => Bool(True)
-      case False => Bool(False)
+      case ⊤ => new Bool(⊤)
+      case ⊥ => new Bool(⊥)
+      case True => new Bool(True)
+      case False => new Bool(False)
 
     }
 }
+
+
+
 
 // for strings we'll use the {⊥,⊤} domain s.t. ⊥ means no string and ⊤
 // means any string, so the ordering is ⊥ ⊑ ⊤.
@@ -600,6 +757,8 @@ class Str_unset extends Str {
       case x: Str_unset => new Bool(Set(false))
       case _ => sys.error("undefined behavior. (Type mismatch)")
     }
+
+  override def toString = "Str_⊥"
 }
 
 class Str_set extends Str {
@@ -638,6 +797,8 @@ class Str_set extends Str {
       case x: Str_unset => new Bool(Set(true))
       case _ => sys.error("undefined behavior. (Type mismatch)")
     }
+
+  override def toString = "Str_⊤"
 }
 
 
@@ -655,7 +816,139 @@ object Str {
 // for convenience we'll keep a set of addresses and separately a
 // boolean indicating whether the reference could also be Null.
 case class Reference( as:Set[Address], nil:Boolean = false ) extends Value {
-  // ...
+  def is_⊥ : Boolean = as.isEmpty
+  def ⊔( v:Value ): Value =
+    v match {
+      case x:Reference =>
+        new Reference(x.as ++ as, nil || x.nil)
+      case _ => sys.error("undefined behavior. (Type mismatch +)")
+    }
+  def +( v:Value ): Value =
+  v match {
+    case x:Reference =>
+      var rtn = Set.empty[Address]
+      for (e <- as) {
+        for (e2 <- x.as) {
+          rtn += Address(e.loc + e2.loc)
+        }
+      }
+      new Reference(rtn, nil || x.nil)
+    case _ => sys.error("undefined behavior. (Type mismatch +)")
+  }
+  def −( v:Value ): Value =
+    v match {
+      case x:Reference =>
+        var rtn = Set.empty[Address]
+        for (e <- as) {
+          for (e2 <- x.as) {
+            rtn += Address(e.loc - e2.loc)
+          }
+        }
+        new Reference(rtn, nil || x.nil)
+      case _ => sys.error("undefined behavior. (Type mismatch +)")
+    }
+  def ×( v:Value ): Value =
+    v match {
+      case x:Reference =>
+        var rtn = Set.empty[Address]
+        for (e <- as) {
+          for (e2 <- x.as) {
+            rtn += Address(e.loc * e2.loc)
+          }
+        }
+        new Reference(rtn, nil || x.nil)
+      case _ => sys.error("undefined behavior. (Type mismatch +)")
+    }
+  def ÷( v:Value ): Value =
+    v match {
+      case x:Reference =>
+        var rtn = Set.empty[Address]
+        for (e <- as) {
+          for (e2 <- x.as) {
+            rtn += Address(e.loc / e2.loc)
+          }
+        }
+        new Reference(rtn, nil || x.nil)
+      case _ => sys.error("undefined behavior. (Type mismatch +)")
+    }
+  def <( v:Value ): Value =
+    v match {
+      case x:Reference =>
+        var rtn = Set.empty[Boolean]
+        for (e <- as) {
+          for (e2 <- x.as) {
+            if (e2.loc >= e.loc) rtn += false
+            else rtn += true
+          }
+        }
+        new Bool(rtn)
+      case _ => sys.error("undefined behavior. (Type mismatch +)")
+    }
+  def ≤( v:Value ): Value =
+    v match {
+      case x:Reference =>
+        var rtn = Set.empty[Boolean]
+        for (e <- as) {
+          for (e2 <- x.as) {
+            if (e2.loc > e.loc) rtn += false
+            else rtn += true
+          }
+        }
+        new Bool(rtn)
+      case _ => sys.error("undefined behavior. (Type mismatch +)")
+    }
+  def ∧( v:Value ): Value = sys.error("undefined behavior (^ for Reference)")
+  def ∨( v:Value ): Value = sys.error("undefined behavior (V for Reference)")
+  def ≈( v:Value ): Bool =
+    v match {
+      case x:Reference =>
+        var rtn = Set.empty[Boolean]
+
+        // Item in one that isn't in the other?
+        if (as.size != x.as.size) {
+          rtn += false
+        }
+
+        // Both null?
+        if (nil == true && nil == x.nil) {
+          rtn += true
+        }
+
+        for (e <- as) {
+          for (e2 <- x.as) {
+            if (e2.loc != e.loc) rtn += false
+            if (e2.loc == e.loc) rtn += true
+          }
+        }
+
+        new Bool(rtn)
+      case _ => sys.error("undefined behavior. (Type mismatch +)")
+    }
+  def ≠( v:Value ): Bool =
+    v match {
+      case x:Reference =>
+        var rtn = Set.empty[Boolean]
+
+        // Item in one that isn't in the other?
+        if (as.size != x.as.size) {
+          rtn += true
+        }
+
+        // Both null?
+        if ((as.isEmpty && x.as.isEmpty) && (nil == true && nil == x.nil)) {
+          rtn += false
+        }
+
+
+        for (e <- as) {
+          for (e2 <- x.as) {
+            if (e2.loc == e.loc) rtn += false
+            if (e2.loc != e.loc) rtn += true
+          }
+        }
+        new Bool(rtn)
+      case _ => sys.error("undefined behavior. (Type mismatch +)")
+    }
 
   override def toString =
     if ( as.isEmpty && nil ) "null"
@@ -668,11 +961,14 @@ case class Reference( as:Set[Address], nil:Boolean = false ) extends Value {
 }
 
 object Reference {
-  val ⊥ = // ...
-  val Null = // ...
+  val ⊥ = Nil
+  val Null = new Reference(Set.empty[Address], true)
 
-  def apply( a:Address ): Reference =
+  def apply( a:Address ): Reference = {
     // ...
+
+    new Reference(Set(a), false)
+  }
 }
 
 // abstract addresses will be the AST node id of the left-hand side
@@ -685,9 +981,11 @@ case class Address( loc:Int ) {
 //——————————————————————————————————————————————————————————————————————————————
 // Object
 
-case class Object( cn:ClassName, flds:Map[Var, Value] ) {
+case class Object( cn:ClassName, flds:ListMap[Var, Value] ) {
   def ⊔( o:Object ): Object = {
-    // ...
+    if (o.cn != cn) sys.error("undefined behavior. (union of different objects)")
+
+    Object(cn, o.flds ++ flds)
   }
 
   def apply( x:Var ): Value =
