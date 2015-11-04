@@ -1,0 +1,101 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Structured General Purpose Assignment% LaTeX Template%% This template has been downloaded from:% http://www.latextemplates.com%% Original author:% Ted Pavlic (http://www.tedpavlic.com)%% Note:% The \lipsum[#] commands throughout this template generate dummy text% to fill the template out. These commands should all be removed when % writing assignment content.%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%----------------------------------------------------------------------------------------%	PACKAGES AND OTHER DOCUMENT CONFIGURATIONS%----------------------------------------------------------------------------------------\documentclass{article}\usepackage{fancyhdr} % Required for custom headers\usepackage{lastpage} % Required to determine the last page for the footer\usepackage{extramarks} % Required for headers and footers\usepackage{graphicx} % Required to insert images\usepackage{lipsum} % Used for inserting dummy 'Lorem ipsum' text into the template\usepackage{amsfonts}
+\usepackage{subfig}
+\usepackage{graphicx}\usepackage{caption}
+
+%%% Margins%\topmargin=-0.45in%\evensidemargin=0in%\oddsidemargin=0in%\textwidth=6.5in%\textheight=9.0in%\headsep=0.25in %%\linespread{1.1} % Line spacing%%% Set up the header and footer%\pagestyle{fancy}%\lhead{\hmwkAuthorName} % Top left header%\chead{\hmwkClass\ (\hmwkClassInstructor): \hmwkTitle} % Top center header%\rhead{\firstxmark} % Top right header%\lfoot{\lastxmark} % Bottom left footer%\cfoot{} % Bottom center footer%\rfoot{Page\ \thepage\ of\ \pageref{LastPage}} % Bottom right footer%\renewcommand\headrulewidth{0.4pt} % Size of the header rule%\renewcommand\footrulewidth{0.4pt} % Size of the footer rule%%\setlength\parindent{0pt} % Removes all indentation from paragraphs%%%----------------------------------------------------------------------------------------%%	DOCUMENT STRUCTURE COMMANDS%%	Skip this unless you know what you're doing%%----------------------------------------------------------------------------------------%%% Header and footer for when a page split occurs within a problem environment%\newcommand{\enterProblemHeader}[1]{%\nobreak\extramarks{#1}{#1 continued on next page\ldots}\nobreak%\nobreak\extramarks{#1 (continued)}{#1 continued on next page\ldots}\nobreak%}%%% Header and footer for when a page split occurs between problem environments%\newcommand{\exitProblemHeader}[1]{%\nobreak\extramarks{#1 (continued)}{#1 continued on next page\ldots}\nobreak%\nobreak\extramarks{#1}{}\nobreak%}%%\setcounter{secnumdepth}{0} % Removes default section numbers%\newcounter{homeworkProblemCounter} % Creates a counter to keep track of the number of problems%%\newcommand{\homeworkProblemName}{}%\newenvironment{homeworkProblem}[1][Problem \arabic{homeworkProblemCounter}]{ % Makes a new environment called homeworkProblem which takes 1 argument (custom name) but the default is "Problem #"%\stepcounter{homeworkProblemCounter} % Increase counter for number of problems%\renewcommand{\homeworkProblemName}{#1} % Assign \homeworkProblemName the name of the problem%\section{\homeworkProblemName} % Make a section in the document with the custom problem count%\enterProblemHeader{\homeworkProblemName} % Header and footer within the environment%}{%\exitProblemHeader{\homeworkProblemName} % Header and footer after the environment%}%%\newcommand{\problemAnswer}[1]{ % Defines the problem answer command with the content as the only argument%\noindent\framebox[\columnwidth][c]{\begin{minipage}{0.98\columnwidth}#1\end{minipage}} % Makes the box around the problem answer and puts the content inside%}%%\newcommand{\homeworkSectionName}{}%\newenvironment{homeworkSection}[1]{ % New environment for sections within homework problems, takes 1 argument - the name of the section%\renewcommand{\homeworkSectionName}{#1} % Assign \homeworkSectionName to the name of the section from the environment argument%\subsection{\homeworkSectionName} % Make a subsection with the custom name of the subsection%\enterProblemHeader{\homeworkProblemName\ [\homeworkSectionName]} % Header and footer within the environment%}{%\enterProblemHeader{\homeworkProblemName} % Header and footer after the environment%}   %----------------------------------------------------------------------------------------%	NAME AND CLASS SECTION%----------------------------------------------------------------------------------------\newcommand{\hmwkTitle}{Assignment\ \#3} % Assignment title\newcommand{\hmwkDueDate}{Tuesday,\ November\ 3,\ 2015} % Due date\newcommand{\hmwkClass}{CS\ 260} % Course/class\newcommand{\hmwkClassInstructor}{Prof. Hardekopf} % Teacher/lecturer\newcommand{\hmwkAuthorName}{Chad Spensky} % Your name%----------------------------------------------------------------------------------------%	TITLE PAGE%----------------------------------------------------------------------------------------\title{\vspace{2in}\textmd{\textbf{\hmwkClass:\ \hmwkTitle}}\\\normalsize\vspace{0.1in}\small{Due\ on\ \hmwkDueDate}\\\vspace{0.1in}\large{\textit{\hmwkClassInstructor}}\vspace{3in}}\author{\textbf{\hmwkAuthorName}}\date{} % Insert date here if you want it to appear below your name%----------------------------------------------------------------------------------------\begin{document}\maketitle\newpage
+%----------------------------------------------------------------------------------------%	TABLE OF CONTENTS%----------------------------------------------------------------------------------------%\setcounter{tocdepth}{1} % Uncomment this line if you don't want subsections listed in the ToC%%\newpage%\tableofcontents%\newpage%----------------------------------------------------------------------------------------%	PROBLEM 1%----------------------------------------------------------------------------------------% To have just one problem per page, simply put a \clearpage after each problem
+
+
+\begin{figure*}
+
+\centering
+\subfloat[Addition]{
+    \begin{tabular}{c|ccccc}
+     			& $\bot$  		& $\mathbb{Z-}$ 	& $0$		 & $\mathbb{Z+}$ 	& $\top$ \\ \hline    $\bot$  		& $\bot$			&  $\bot$   			&     $\bot$          	&	    $\bot$                    	&    $\bot$  \\
+ $\mathbb{Z-}$ 	& $\bot$			&  $\mathbb{Z-}$    			&         $\mathbb{Z-}$      	&          $\top$    			&        $\top$         \\
+    $0$    		& $\bot$			&   $\mathbb{Z-}$ 			&       $0$         	&            $\mathbb{Z+}$   			&     $\top$              \\
+ $\mathbb{Z+}$&  $\bot$			&   $\top$   			&  $\mathbb{Z+}$              	&       $\mathbb{Z+}$       			&     $\top$            \\
+    $\top$       	& $\bot$     				&      	$\top$		&        $\top$       	&            $\top$  			&     $\top$           \\ 
+    
+    \end{tabular}
+    \label{tbl:add}}~~~~~
+\subfloat[Subtraction]{    \begin{tabular}{c|ccccc}
+     			& $\bot$  		& $\mathbb{Z-}$ 	& $0$		 & $\mathbb{Z+}$ 	& $\top$ \\ \hline    $\bot$  		& $\bot$			&  $\bot$   			&     $\bot$          	&	    $\bot$                    	&    $\bot$  \\
+ $\mathbb{Z-}$ 	& $\bot$			&  $\top$    			&         $\mathbb{Z-}$      	&          $\mathbb{Z-}$   			&        $\top$         \\
+    $0$    		& $\bot$			&   $\mathbb{Z+}$ 			&       $0$         	&            $\mathbb{Z-}$   			&     $\top$              \\
+ $\mathbb{Z+}$&  $\bot$			&   $\mathbb{Z+}$   			&  $\mathbb{Z+}$              	&       $\top$       			&     $\top$            \\
+    $\top$       	& $\bot$     				&      	$\top$		&        $\top$       	&            $\top$  			&     $\top$           \\ \end{tabular}
+\label{tbl:sub}
+}
+
+\subfloat[Multiplication]{    \begin{tabular}{c|ccccc}
+     			& $\bot$  		& $\mathbb{Z-}$ 	& $0$		 & $\mathbb{Z+}$ 	& $\top$ \\ \hline    $\bot$  		& $\bot$			&  $\bot$   			&     $\bot$          	&	    $\bot$                    	&    $\bot$  \\
+ $\mathbb{Z-}$ 	& $\bot$			&  $\mathbb{Z+}$    			&         $0$      	&          $\mathbb{Z-}$    			&        $\top$         \\
+    $0$    		& $\bot$			&   $0$ 			&       $0$         	&            $0$   			&     $0$              \\
+ $\mathbb{Z+}$&  $\bot$			&   $\mathbb{Z-}$   			&  $0$              	&       $\mathbb{Z+}$       			&     $\top$            \\
+    $\top$       	& $\bot$     				&      	$\top$		&        $0$       	&            $\top$  			&     $\top$           \\ \end{tabular}
+\label{tbl:mul}}~~~~~
+\subfloat[Division]{    \begin{tabular}{c|ccccc}
+     			& $\bot$  		& $\mathbb{Z-}$ 	& $0$		 & $\mathbb{Z+}$ 	& $\top$ \\ \hline    $\bot$  		& $\bot$			&  $\bot$   			&     $\bot$          	&	    $\bot$                    	&    $\bot$  \\
+ $\mathbb{Z-}$ 	& $\bot$			&  $\mathbb{Z+}$    			&         $\bot$      	&          $\mathbb{Z-}$    			&        $\top$         \\
+    $0$    		& $\bot$			&   $0$ 			&       $\bot$         	&            $0$   			&     $0$              \\
+ $\mathbb{Z+}$&  $\bot$			&   $\mathbb{Z-}$   			&  $\bot$              	&       $\mathbb{Z+}$       			&     $\top$            \\
+    $\top$       	& $\bot$     				&      	$\top$		&        $\bot$       	&            $\top$  			&     $\top$           \\ \end{tabular}
+\label{tbl:div}
+}
+\caption{Arithmetic Tables}
+\label{fig:table}
+\end{figure*}
+%\begin{homeworkProblem}
+\section{Arithmetic Operators}\emph{In a separate PDF document generated from Latex, formalize the abstract arithmetic operators on the integer abstract domain (i.e., addition, subtraction, multiplication, and division) and prove that they are all monotone (hint: the easiest way to formalize operators on finite abstract domains is usually to give them as a table).}
+\\\\
+For a function to be monotone, we must show that the function $f:\mathbb{S}\rightarrow \mathbb{S'}$, the following holds $\forall x,y \in S : x \sqsubseteq y \Rightarrow f(x) \sqsubseteq f(y)$
+We define our abstraction function as $\alpha^{\#}:\mathbb{Z}\rightarrow \mathbb{Z^\#} = \mathbb{\{\bot,Z-,}0\mathbb{,Z+,\top\}}$ where $\top = \mathbb{Z}$.
+We define $(x,y) \sqsubseteq (x',y')$ for $x,y,x',y' \in \mathbb{Z^\#} \iff x \sqsubseteq y$ and $x' \sqsubseteq y'$.  For the cases where $x = (\bot,*)$, the result $\bot$ is trivially $\sqsubseteq y, \forall y \in \mathbb{Z^\#}$, and similarly with $x = (*,\top)$, which yields $\top$.
+
+For convenience, the table for each operation can be found in Figure \ref{fig:table}.
+
+\subsection{Addition}
+Thus, for $x,y \in \mathbb{Z}$ we can show a proof by cases.  
+Since addition is commutative, without loss of generality, we denote $(x,y) \in (\mathbb{Z^\#},\mathbb{Z^\#})$ where $x \sqsubseteq y$.
+Our addition function is $f^{+}:(\mathbb{Z^\#},\mathbb{Z^\#})\rightarrow\mathbb{Z^\#}$.
+\paragraph{$x = (\mathbb{Z-},\mathbb{Z-})$}
+\begin{itemize}
+\item $y = (\mathbb{Z-},\mathbb{Z-}) \Rightarrow \alpha^{\#}(x) \sqsubseteq \alpha^{\#}(y) \Rightarrow \mathbb{Z-} \sqsubseteq \mathbb{Z-}$
+\item $y = (\mathbb{Z-},\top) \Rightarrow \alpha^{\#}(x) \sqsubseteq \alpha^{\#}(0) \Rightarrow \mathbb{Z-} \sqsubseteq \top$
+\item $y = (\top,\top) \Rightarrow \alpha^{\#}(x) \sqsubseteq \alpha^{\#}(y) \Rightarrow \mathbb{Z-} \sqsubseteq \top$
+\end{itemize}
+\paragraph{$x = (0,0)$}
+\begin{itemize}
+\item $y = (0,0) \Rightarrow \alpha^{\#}(x) \sqsubseteq \alpha^{\#}(0) \Rightarrow 0 \sqsubseteq 0$
+\item $y = (0,\top) \Rightarrow \alpha^{\#}(x) \sqsubseteq \alpha^{\#}(y) \Rightarrow 0 \sqsubseteq \top$
+\item $y = (\top,\top) \Rightarrow \alpha^{\#}(x) \sqsubseteq \alpha^{\#}(y) \Rightarrow 0 \sqsubseteq \top$
+\end{itemize}
+\paragraph{$x = (\mathbb{Z+},\mathbb{Z+})$}
+\begin{itemize}
+\item $y = (\mathbb{Z+},\mathbb{Z+}) \Rightarrow \alpha^{\#}(x) \sqsubseteq \alpha^{\#}(0) \Rightarrow \mathbb{Z+} \sqsubseteq \mathbb{Z+}$
+\item $y = (\mathbb{Z+},\top) \Rightarrow \alpha^{\#}(x) \sqsubseteq \alpha^{\#}(y) \Rightarrow \mathbb{Z+} \sqsubseteq \top$
+\item $y = (\top,\top) \Rightarrow \alpha^{\#}(x) \sqsubseteq \alpha^{\#}(y) \Rightarrow \mathbb{Z+} \sqsubseteq \top$
+\end{itemize} $\square$
+
+\subsection{Subtraction}
+For subtraction, commutativity does not hold, so we will outline the possible cases below.
+A similar logic holds for $\top$ and $\bot$ as it did it addition.
+However note that $\forall x = (*,\top), (\top,*)  \alpha^{\#}(x) = \top$ and is thus trivially is will satisfy monotonicity for any $x' \sqsubseteq (*,\top)$ or $(\top,*)$.
+Thus, the only remaining comparisons are where $(x,y) = (x',y')$, which also trivially hold.
+A proof by cases as done in the addition would also be possible, but unnecessary. $\square$
+
+\subsection{Multiplication}
+A similar argument to our proof in subtraction and addition hold here, i.e., $\bot$ will always satisfy our requirement, and given that multiplication is commutative, we again can assume $(x,y) \Rightarrow x \sqsubseteq y$.
+$(\mathbb{Z-},\top), (\mathbb{Z+},\top)$, and $(\top,\top)$ will also hold under the same logic, however 0 is a special case here.
+However, the identity trivially holds, i.e.,$x = (0,\top), y = (0,\top) \Rightarrow 0 \sqsubseteq 0$ as does $x = (\top,\top), y = (\top,\top) \Rightarrow \top \sqsubseteq \top$.
+Thus satisfying the requirement to be monotone. $\square$
+
+\subsection{Division}
+The same logic as before applies again to every case but $(\top,0)$ and $(0,\top)$.
+However since the identity will trivially hold, and $\alpha^{\#}((\top,0)) = \bot \sqsubseteq \alpha^{\#}((\top,\top)) = \top$ and $\alpha^{\#}((0,\top)) = 0 \sqsubseteq \alpha^{\#}((\top,\top)) = \top$, we again have shown that the function is monotone.  $\square$
+
+
+
+
+%\end{homeworkProblem}\end{document}
