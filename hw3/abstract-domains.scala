@@ -154,9 +154,15 @@ case class ℤ_top extends ℤ {
       case _ => new ℤ_top()
     }
 
-  def +( v:Value ): ℤ = new ℤ_top()
+  def +( v:Value ): ℤ = v match {
+    case a:ℤ_bot => new ℤ_bot()
+    case  _ => new ℤ_top()
+  }
 
-  def −( v:Value ): ℤ = new ℤ_top()
+  def −( v:Value ): ℤ = v match {
+    case a:ℤ_bot => new ℤ_bot()
+    case  _ => new ℤ_top()
+  }
 
   def ×( v:Value ): ℤ = v match {
     case a:ℤ_pos => new ℤ_top()
@@ -167,15 +173,25 @@ case class ℤ_top extends ℤ {
     case _ => sys.error("undefined behavior. (Type mismatch)")
   }
 
-  def ÷( v:Value ): ℤ = new ℤ_top()
+  def ÷( v:Value ): ℤ = v match {
+    case a:ℤ_bot => new ℤ_bot()
+    case a:ℤ_zero => new ℤ_bot() // Anything divided by zero is undefined.
+    case _ => new ℤ_top()
+  }
 
   def <( v:Value ): Bool = new Bool(Set(true, false))
 
   def ≤( v:Value): Bool = new Bool(Set(true,false))
 
-  def ∧( v:Value ): ℤ = new ℤ_top()
+  def ∧( v:Value ): ℤ = v match {
+    case a:ℤ_bot => new ℤ_bot()
+    case _ => new ℤ_top()
+  }
 
-  def ∨( v:Value ): ℤ = new ℤ_top()
+  def ∨( v:Value ): ℤ = v match {
+    case a:ℤ_bot => new ℤ_bot()
+    case _ => new ℤ_top()
+  }
 
   def ≈( v:Value ): Bool =
     v match {
