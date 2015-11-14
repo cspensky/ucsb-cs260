@@ -179,7 +179,7 @@ case class State(/* θ is a global now */ so: Option[Stmt], ρ: Locals, σ: Heap
     }
 
   // the state transition relation.
-  def next: Set[State] =
+  def next: Set[ (Int, State) ] =
     so match {
       // Cases with statements (Rules 1-8)
       case Some(s) =>
@@ -189,7 +189,7 @@ case class State(/* θ is a global now */ so: Option[Stmt], ρ: Locals, σ: Heap
             if (DEBUG) println("Assign " + x + " = " + e + " (" + η(e) +")")
 
             // Always just assign the value
-            Set(State(None, ρ + (x -> η(e)), σ, κs))
+            Set( (x.id, State(None, ρ + (x -> η(e)), σ, κs)) )
 
           // Rule 2
           case Update(e1: Exp, x: Var, e2) =>
@@ -198,7 +198,7 @@ case class State(/* θ is a global now */ so: Option[Stmt], ρ: Locals, σ: Heap
             val ref:Reference = η(e1).asInstanceOf[Reference]
             val new_heap = update(σ, ref.as, x, η(e2))
 
-            Set(State(None, ρ, new_heap, κs))
+            Set( (x.id, State(None, ρ, new_heap, κs)) )
 
           // Rule 3
           case Call(x, e, mn, args) =>
@@ -208,10 +208,10 @@ case class State(/* θ is a global now */ so: Option[Stmt], ρ: Locals, σ: Heap
             val rtn:Set[(Locals, Heap, Seq[Kont])] = call(x, ref.as, σ, mn, args.map(η(_)), ρ,κs )
 
 
-            var states = Set.empty[State]
+            var states = Set.empty[ (Int,State) ]
 
             for (s <- rtn) {
-              states += State(None, s._1, s._2, s._3)
+              states += (x.id, State(None, s._1, s._2, s._3))
             }
 
             // Return our set of states
