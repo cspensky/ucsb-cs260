@@ -1,0 +1,12 @@
+class If {
+  def If(x: string, y: string, z: string) = {
+    x := {"alice","bob"};
+
+    if (x = "alice") { y := x + x; } 
+    else { y := "bob" + x; };
+
+    print x;
+    print y;
+	print z;
+  }
+}

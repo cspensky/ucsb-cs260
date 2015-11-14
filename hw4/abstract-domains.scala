@@ -223,15 +223,7 @@ case class ℤ_bot extends ℤ {
 
   def is_⊥ : Boolean = true
 
-  def ⊔( v:Value ): ℤ =
-    v match {
-      case a:ℤ_pos => a
-      case a:ℤ_neg => a
-      case a:ℤ_zero => a
-      case a:ℤ_top => new ℤ_top()
-      case a:ℤ_bot => this
-      case _ => sys.error("undefined behavior. (Type mismatch)")
-    }
+  def ⊔( v:Value ): ℤ = new ℤ_bot()
 
   def +( v:Value ): ℤ = new ℤ_bot()
 
@@ -276,7 +268,7 @@ case class ℤ_pos extends ℤ {
       case a:ℤ_neg => new ℤ_top()
       case a:ℤ_zero => new ℤ_top()
       case a:ℤ_top => new ℤ_top()
-      case a:ℤ_bot => this
+      case a:ℤ_bot => new ℤ_bot()
       case _ => sys.error("undefined behavior. (Type mismatch)")
     }
 
@@ -396,7 +388,7 @@ case class ℤ_neg extends ℤ {
       case a:ℤ_neg => new ℤ_neg()
       case a:ℤ_zero => new ℤ_top()
       case a:ℤ_top => new ℤ_top()
-      case a:ℤ_bot => this
+      case a:ℤ_bot => new ℤ_bot()
       case _ => sys.error("undefined behavior. (Type mismatch)")
     }
 
@@ -516,7 +508,7 @@ case class ℤ_zero extends ℤ {
       case a:ℤ_neg => new ℤ_top()
       case a:ℤ_zero => new ℤ_zero()
       case a:ℤ_top => new ℤ_top()
-      case a:ℤ_bot => this
+      case a:ℤ_bot => new ℤ_bot()
       case _ => sys.error("undefined behavior. (Type mismatch)")
     }
 
@@ -847,10 +839,54 @@ case class Reference( as:Set[Address], nil:Boolean = false ) extends Value {
         new Reference(x.as ++ as, nil || x.nil)
       case _ => sys.error("undefined behavior. (Type mismatch +)")
     }
-  def +( v:Value ): Value = sys.error("undefined behavior. (+ on Ref)")
-  def −( v:Value ): Value = sys.error("undefined behavior. (- on Ref)")
-  def ×( v:Value ): Value = sys.error("undefined behavior. (x on Ref)")
-  def ÷( v:Value ): Value = sys.error("undefined behavior. (/ on Ref)")
+  def +( v:Value ): Value =
+  v match {
+    case x:Reference =>
+      var rtn = Set.empty[Address]
+      for (e <- as) {
+        for (e2 <- x.as) {
+          rtn += Address(e.loc + e2.loc)
+        }
+      }
+      new Reference(rtn, nil || x.nil)
+    case _ => sys.error("undefined behavior. (Type mismatch +)")
+  }
+  def −( v:Value ): Value =
+    v match {
+      case x:Reference =>
+        var rtn = Set.empty[Address]
+        for (e <- as) {
+          for (e2 <- x.as) {
+            rtn += Address(e.loc - e2.loc)
+          }
+        }
+        new Reference(rtn, nil || x.nil)
+      case _ => sys.error("undefined behavior. (Type mismatch +)")
+    }
+  def ×( v:Value ): Value =
+    v match {
+      case x:Reference =>
+        var rtn = Set.empty[Address]
+        for (e <- as) {
+          for (e2 <- x.as) {
+            rtn += Address(e.loc * e2.loc)
+          }
+        }
+        new Reference(rtn, nil || x.nil)
+      case _ => sys.error("undefined behavior. (Type mismatch +)")
+    }
+  def ÷( v:Value ): Value =
+    v match {
+      case x:Reference =>
+        var rtn = Set.empty[Address]
+        for (e <- as) {
+          for (e2 <- x.as) {
+            rtn += Address(e.loc / e2.loc)
+          }
+        }
+        new Reference(rtn, nil || x.nil)
+      case _ => sys.error("undefined behavior. (Type mismatch +)")
+    }
   def <( v:Value ): Value =
     v match {
       case x:Reference =>

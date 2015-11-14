@@ -1,0 +1,32 @@
+class A {
+    def A(b:B) = {
+        b := new B();
+
+        if (null = b ) {
+            print "you should not see this";
+        };
+        if (b = null) {
+            print "you should not see this";
+        };
+
+        if (b != null) {
+            print "Hooray";
+        };
+        if (null != b) {
+            print "Hooray";
+        };
+        if (null = null) {
+            print "Hooray";
+        };
+    }
+}
+class B {
+    def B() = {
+        if(self = null) {
+            print "you should not see this";
+        };
+        if(null = self) {
+            print "you should not see this";
+        };
+    }
+}
