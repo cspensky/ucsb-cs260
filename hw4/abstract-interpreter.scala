@@ -37,7 +37,7 @@ object Abstract {
           var work = Set[State]( initstate(ast) )
 
           // remember set
-          val memo = MSet[State]()
+          val memo = MMap[Int, State]()
 
           // compute fixpoint
           while ( work.nonEmpty ) {
@@ -53,7 +53,7 @@ object Abstract {
                 // ahead and put such states on the worklist
                 if (DEBUG) println("new state FinK " + ς)
                 Some(ς)
-              } else if ( !memo(ς) ) {
+              } else if ( !memo(ς.) ) {
                 // if the state does have a statement, and we have not
                 // seen it before, memoize it and put it on the
                 // worklist
