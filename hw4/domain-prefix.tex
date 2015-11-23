@@ -1,0 +1,247 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Structured General Purpose Assignment
+% LaTeX Template
+%
+% This template has been downloaded from:
+% http://www.latextemplates.com
+%
+% Original author:
+% Ted Pavlic (http://www.tedpavlic.com)
+%
+% Note:
+% The \lipsum[#] commands throughout this template generate dummy text
+% to fill the template out. These commands should all be removed when 
+% writing assignment content.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%----------------------------------------------------------------------------------------
+%	PACKAGES AND OTHER DOCUMENT CONFIGURATIONS
+%----------------------------------------------------------------------------------------
+
+\documentclass{article}
+
+\usepackage{fancyhdr} % Required for custom headers
+\usepackage{lastpage} % Required to determine the last page for the footer
+\usepackage{extramarks} % Required for headers and footers
+\usepackage{graphicx} % Required to insert images
+\usepackage{lipsum} % Used for inserting dummy 'Lorem ipsum' text into the template
+\usepackage{amsfonts}
+\usepackage{subfig}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{amsmath}
+
+%
+%% Margins
+%\topmargin=-0.45in
+%\evensidemargin=0in
+%\oddsidemargin=0in
+%\textwidth=6.5in
+%\textheight=9.0in
+%\headsep=0.25in 
+%
+%\linespread{1.1} % Line spacing
+%
+%% Set up the header and footer
+%\pagestyle{fancy}
+%\lhead{\hmwkAuthorName} % Top left header
+%\chead{\hmwkClass\ (\hmwkClassInstructor): \hmwkTitle} % Top center header
+%\rhead{\firstxmark} % Top right header
+%\lfoot{\lastxmark} % Bottom left footer
+%\cfoot{} % Bottom center footer
+%\rfoot{Page\ \thepage\ of\ \pageref{LastPage}} % Bottom right footer
+%\renewcommand\headrulewidth{0.4pt} % Size of the header rule
+%\renewcommand\footrulewidth{0.4pt} % Size of the footer rule
+%
+%\setlength\parindent{0pt} % Removes all indentation from paragraphs
+%
+%%----------------------------------------------------------------------------------------
+%%	DOCUMENT STRUCTURE COMMANDS
+%%	Skip this unless you know what you're doing
+%%----------------------------------------------------------------------------------------
+%
+%% Header and footer for when a page split occurs within a problem environment
+%\newcommand{\enterProblemHeader}[1]{
+%\nobreak\extramarks{#1}{#1 continued on next page\ldots}\nobreak
+%\nobreak\extramarks{#1 (continued)}{#1 continued on next page\ldots}\nobreak
+%}
+%
+%% Header and footer for when a page split occurs between problem environments
+%\newcommand{\exitProblemHeader}[1]{
+%\nobreak\extramarks{#1 (continued)}{#1 continued on next page\ldots}\nobreak
+%\nobreak\extramarks{#1}{}\nobreak
+%}
+%
+%\setcounter{secnumdepth}{0} % Removes default section numbers
+%\newcounter{homeworkProblemCounter} % Creates a counter to keep track of the number of problems
+%
+%\newcommand{\homeworkProblemName}{}
+%\newenvironment{homeworkProblem}[1][Problem \arabic{homeworkProblemCounter}]{ % Makes a new environment called homeworkProblem which takes 1 argument (custom name) but the default is "Problem #"
+%\stepcounter{homeworkProblemCounter} % Increase counter for number of problems
+%\renewcommand{\homeworkProblemName}{#1} % Assign \homeworkProblemName the name of the problem
+%\section{\homeworkProblemName} % Make a section in the document with the custom problem count
+%\enterProblemHeader{\homeworkProblemName} % Header and footer within the environment
+%}{
+%\exitProblemHeader{\homeworkProblemName} % Header and footer after the environment
+%}
+%
+%\newcommand{\problemAnswer}[1]{ % Defines the problem answer command with the content as the only argument
+%\noindent\framebox[\columnwidth][c]{\begin{minipage}{0.98\columnwidth}#1\end{minipage}} % Makes the box around the problem answer and puts the content inside
+%}
+%
+%\newcommand{\homeworkSectionName}{}
+%\newenvironment{homeworkSection}[1]{ % New environment for sections within homework problems, takes 1 argument - the name of the section
+%\renewcommand{\homeworkSectionName}{#1} % Assign \homeworkSectionName to the name of the section from the environment argument
+%\subsection{\homeworkSectionName} % Make a subsection with the custom name of the subsection
+%\enterProblemHeader{\homeworkProblemName\ [\homeworkSectionName]} % Header and footer within the environment
+%}{
+%\enterProblemHeader{\homeworkProblemName} % Header and footer after the environment
+%}
+   
+%----------------------------------------------------------------------------------------
+%	NAME AND CLASS SECTION
+%----------------------------------------------------------------------------------------
+
+\newcommand{\hmwkTitle}{Assignment\ \#4\\ String Prefix} % Assignment title
+\newcommand{\hmwkDueDate}{Tuesday,\ November\ 24,\ 2015} % Due date
+\newcommand{\hmwkClass}{CS\ 260} % Course/class
+\newcommand{\hmwkClassInstructor}{Prof. Hardekopf} % Teacher/lecturer
+\newcommand{\hmwkAuthorName}{Chad Spensky} % Your name
+
+%----------------------------------------------------------------------------------------
+%	TITLE PAGE
+%----------------------------------------------------------------------------------------
+
+\title{
+\vspace{2in}
+\textmd{\textbf{\hmwkClass:\ \hmwkTitle}}\\
+\normalsize\vspace{0.1in}\small{Due\ on\ \hmwkDueDate}\\
+\vspace{0.1in}\large{\textit{\hmwkClassInstructor}}
+\vspace{3in}
+}
+
+\author{\textbf{\hmwkAuthorName}}
+\date{} % Insert date here if you want it to appear below your name
+
+%----------------------------------------------------------------------------------------
+\newcommand{\powerset}[1]{\mathbb{P}(#1)}
+
+
+\begin{document}
+
+
+\maketitle
+\newpage
+
+
+
+\section{Abstraction Domain Lattice}
+Let our original lattice $L = (\powerset{S}\cup\powerset{S}+*, \leq)$ and our abstract-domain lattice $L^\# = (S \cup \powerset{S+*} \cup \{ \top,\bot \},\sqsubseteq)$ where $S$ is the set of all strings (including the empty string) where $\top = * = S$ and $\bot$ is \emph{undefined}. Let $\bot \sqsubset s \sqsubseteq s' \sqsubseteq \top, \forall s \in S$ where $s' = x*$ and $\mathbf{isPrefix}(x,s)$. For example $ \bot \sqsubset abc  \sqsubset abc* \sqsubset ab* \sqsubset a* \sqsubset \top$. For connivence let $x*$ denote the set of all stings where $x$ is a prefix, and $s$ denote the singleton set $\{s\}$, thus $\sqsubseteq = \subseteq$ in our lattice.
+\[
+ \alpha(x): L \rightarrow L^\# =
+  \begin{cases} 
+      \hfill \bot    \hfill & \text{ if $x$ is \{\}} \\
+      \hfill \{s\} \hfill & \text{ if $x$ is \{s\}} \\
+      \hfill p* \hfill & \text{ where $p$ is $\mathbf{commonPrefix}(x)$} \\
+  \end{cases}
+\]
+
+\paragraph{Meet ($x \in L^\#$)}
+\begin{itemize}
+	\item $\bot \sqcap x = \bot, \forall x$
+	\item $\top \sqcap x = x, \forall x$
+	\item $x \sqcap y = x, x\cap y$
+\end{itemize}
+\paragraph{Join ($x \in L^\#$)}
+\begin{itemize}
+	\item $\bot \sqcup x = x, \forall x$
+	\item $\top \sqcup x = \top, \forall x$
+	\item $x \sqcup y = \mathbf{commonPrefix}(\{x,y\}), \forall x,y \in S, x \neq y$
+\end{itemize}
+
+The lattice is infinite, but of of finite height since all strings are of finite length, therefore it \textbf{is noetherian}.
+
+\subsection{Monotone Operators}
+\begin{figure*}
+\centering
+\subfloat[Concatenation (+)]{
+    \begin{tabular}{c|ccccc}
+     			& $\bot$  	&	$y$ 	& $y*$			&$\top$ \\ \hline
+    $\bot$  	&    $\bot$	&	$y$		& $y$			&$\top$          \\
+    $x$  		&   	$x$		&	$xy$	& $xy*$			&$\top$          \\
+    $x*$  	&   	$x*$	&	$x*$	& $x*$			&$\top$          \\
+    $\top$  	&    $\top$	&	$\top$	& $\top$		&$\top$          \\
+    \end{tabular}
+}
+
+\subfloat[Comparator ($\leq$)]{
+    \begin{tabular}{c|ccccc}
+     			& $\bot$  	&	$y$ 	& $y*$	&$\top$ \\ \hline
+    $\bot$  	&    $T$		&	$T$		& $T$			&$T$          \\
+    $x$  		&   	$F$		&	$\mathbf{isPrefix}(x,y)$	&$\mathbf{isPrefix}(y,x),F$			&$T,F$          \\
+    $x*$  	&   	$F$	&	$\mathbf{isPrefix}(y,x),F$	& $\mathbf{isPrefix}(y,x)|\mathbf{isPrefix}(x,y),F$			&$T,F$          \\
+    $\top$  	&    $F$	&	$T,F$	& $T,F$		&$T,F$          \\
+    \end{tabular}
+}
+\caption{Arithmetic Tables}
+\label{fig:table}
+\end{figure*}
+
+
+\paragraph{Concatenation (+)}
+For + to be monotone the following must hold: $x+y \leq x'+y' \Rightarrow  \alpha(x)+\alpha(y) \sqsubseteq \alpha(x')+\alpha(y')$, where $x,y,x',y' \in \powerset{S}$ and $a \leq b \Rightarrow \mathbf{isPrefix}(a,b)$ for $a,b \in S$ and $x+y \Rightarrow \{x_{i}y_i\} \forall x_i \in x, y_i \in y$.  Similarly $x \leq y \Rightarrow \mathbf{isPrefix}(x_i, y_i) \forall x_i \in x, y_i \in y$.  In all cases $|x| = |y|$ and $|x'| = |y'|$.
+
+\begin{itemize}
+	\item For case where $x = y = \text{``''}$, this holds trivially.
+	\item For $|x| = |y| = 1$, this holds trivially since the definitions are the same, i.e. straightforward concatenation.
+	\item For $|x| = |y| \geq 1$ and $|x'| = |y'| \geq 1$, $\alpha(x) + \alpha(y) = \alpha(x)$, thus we need only show that $\alpha(x) \sqsubseteq \alpha(x')$.  If $\alpha(x') = \top$, this is trivial. Otherwise it must be the case the $\alpha(x)$ and $\alpha(x')$ since $x + y \leq x' + y'$.
+\end{itemize}
+$\square$
+
+\paragraph{Comparison ($\leq$)}
+The same logic follows for $\leq$. For $\leq$ to be monotone the following must hold: $x \leq y \Rightarrow  \alpha(x) \sqsubseteq \alpha(y)$, where $x,y \in \powerset{S}$ and $x \leq y \Rightarrow \mathbf{substring}(x_i,y_i) \forall x_i \in x, y_i \in y$.
+\begin{itemize}
+	\item For case where $x = y = \{\}$, this holds trivially.
+	\item Similarly for $|x| = |y| = 1$, then the definitions are identical.
+	\item For $|x| = |y| \geq 1$, If $\alpha(y) = \top$, this is trivial. Otherwise it must be the case the $\alpha(x)$ and $\alpha(x')$ since $x \leq y'$.
+\end{itemize}
+$\square$
+
+\subsection{Galois Connection}
+\[
+ \gamma(\hat{x}): L^\# \rightarrow L =
+  \begin{cases} 
+      \hfill \{\}    \hfill & \text{ if $\hat{x}$ is $\bot$} \\
+      \hfill s \hfill & \text{ if $\hat{x}$ is s} \\
+      \hfill s* \hfill & \text{ if $\hat{x}$ is s*} \\
+      \hfill S \hfill & \text{ if $\hat{x}$ is $\top$}
+  \end{cases}
+\]
+We must show that $\alpha(x) \sqsubseteq \hat{x} \iff x \subseteq \gamma(\hat{x})$.
+\\\\
+$\alpha(x) \sqsubseteq \hat{x} \Rightarrow x \subseteq \gamma(\hat{x})$:
+\begin{itemize}
+	\item If  $x = \{\}$, this holds trivially.
+	\item If $|x| = 1$, then either $\hat{x} \in S$, which holds trivially, or $\hat{x} = y*, \mathbf{isPrefix}(y,x)$, which by our definition $x \in y* \Rightarrow x \subseteq y*$ 
+	\item Since $\gamma(\hat{x}) = \hat{x}$ and $x \subseteq \alpha(x)$, this must hold.
+\end{itemize}
+$ x \subseteq \gamma(\hat{x}) \Rightarrow \alpha(x) \sqsubseteq \hat{x}$:
+\begin{itemize}
+	\item If  $x = \{\}$, this holds trivially.
+	\item If $|x| = 1$, $\alpha(x) = x, \gamma(\hat{x}) = \hat{x} \Rightarrow \alpha(x) \sqsubseteq \hat{x}$ 
+	\item For $|x| \geq 1$, $\hat{x} = \top$ must hold.   Otherwise $x$ must be of the form $y*$ and $x \subseteq \gamma(y*) \Rightarrow x \subseteq y* \Rightarrow \mathbf{commonPrefix}(x) = y \in \hat{x} \Rightarrow \alpha(x) \subseteq \hat{x}$
+	\end{itemize}
+$\square$
+
+\subsection{Soundness}
+Because a Galois connection exists, our approximation is both sound and precise.
+
+
+
+
+
+
+
+
+\end{document}
