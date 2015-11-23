@@ -199,7 +199,7 @@ For + to be monotone the following must hold: $x+y \leq x'+y' \Rightarrow  \alph
 
 \begin{itemize}
 	\item For case where $x = y = \text{``''}$, this holds trivially.
-	\item Otherwise, we need to show that $\genRegExp{x} \sqcup \genRegExp{y} \sqsubseteq  \genRegExp{x'} \sqcup \genRegExp{y'}$.  We know that $x \cup y \subseteq x' \cup y'$.  Thus since $\genRegExp{}$ returns the most concise regular expression that represents all $a \in x$, $x = \regExpSet{\genRegExp{x}}$. Thus, $x \cup y = \regExpSet{\genRegExp{x \cup y}}$ and $x' \cup y' = \regExpSet{\genRegExp{x' \cup y'}}$ which satisfies this condition.
+	\item Otherwise, we need to show that $\genRegExp{x} \sqcup \genRegExp{y} \sqsubseteq  \genRegExp{x'} \sqcup \genRegExp{y'}$.  We know that $x \cup y \subseteq x' \cup y'$.  Thus since $\genRegExp{}$ returns the most concise regular expression that represents all $a \in x$, $x \subseteq \regExpSet{\genRegExp{x}}$. Thus, $x \cup y \subseteq \regExpSet{\genRegExp{x \cup y}}$ and $x' \cup y' \subseteq \regExpSet{\genRegExp{x' \cup y'}}$.  If there exists an element $z \in \regExpSet{\genRegExp{x \cup y}}, z \notin \regExpSet{\genRegExp{x' \cup y'}}$, this would imply that there are elements that are represented by $\genRegExp{x \cup y}$ that are not represented by $\genRegExp{x' \cup y'}$, which we know can't happen since $x \cup y \subseteq x' \cup y'$.  Therefore our assertion must hold.
 \end{itemize}
 $\square$
 
@@ -207,7 +207,7 @@ $\square$
 The same logic follows for $\leq$. For $\leq$ to be monotone the following must hold: $x \leq y \Rightarrow  \alpha(x) \sqsubseteq \alpha(y)$, where $x,y \in \powerset{S}$ and $x \leq y \Rightarrow x \subseteq y$.
 \begin{itemize}
 	\item For case where $x = y = \{\}$, this holds trivially.
-	\item Otherwise, we must show that $\genRegExp{x} \sqsubseteq \genRegExp{y}$. Since $\genRegExp{}$ returns the most concise regular expression, we not that $x = \regExpSet{\genRegExp{x}}$.  Thus $\regExpSet{\genRegExp{x}} \sqsubseteq \regExpSet{\genRegExp{y}}$, which by definition satisfies this condition.
+	\item Otherwise, we must show that $\genRegExp{x} \sqsubseteq \genRegExp{y}$. Since $\genRegExp{}$ returns the most concise regular expression, we not that $x \subseteq \regExpSet{\genRegExp{x}}$.  Thus $\regExpSet{\genRegExp{x}} \sqsubseteq \regExpSet{\genRegExp{y}}$, which by similar logic to above, i.e. $z \in \regExpSet{\genRegExp{x}} \Rightarrow \regExpSet{\genRegExp{y}}$, that is the regular expression for $\alpha(y)$ must at least express everything can be expressed by $\alpha(x)$.
 \end{itemize}
 $\square$
 
