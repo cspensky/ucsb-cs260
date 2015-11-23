@@ -137,7 +137,7 @@
 
 
 \section{Abstraction Domain Lattice}
-Let our original lattice $L = (\powerset{S}\cup\powerset{S}+*, \leq)$ and our abstract-domain lattice $L^\# = (S \cup \powerset{S+*} \cup \{ \top,\bot \},\sqsubseteq)$ where $S$ is the set of all strings (including the empty string) where $\top = * = S$ and $\bot$ is \emph{undefined}. Let $\bot \sqsubset s \sqsubseteq s' \sqsubseteq \top, \forall s \in S$ where $s' = x*$ and $\mathbf{isPrefix}(x,s)$. For example $ \bot \sqsubset abc  \sqsubset abc* \sqsubset ab* \sqsubset a* \sqsubset \top$. For connivence let $x*$ denote the set of all stings where $x$ is a prefix, and $s$ denote the singleton set $\{s\}$, thus $\sqsubseteq = \subseteq$ in our lattice.
+Let our original lattice $L = (\powerset{S}, \leq)$ and our abstract-domain lattice $L^\# = (S \cup \powerset{S+*} \cup \{ \top,\bot \},\sqsubseteq)$ where $S$ is the set of all strings (including the empty string) where $\top = * = S$ and $\bot$ is \emph{undefined}. Let $\bot \sqsubset s \sqsubseteq s' \sqsubseteq \top, \forall s \in S$ where $s' = x*$ and $\mathbf{isPrefix}(x,s)$. For example $ \bot \sqsubset abc  \sqsubset abc* \sqsubset ab* \sqsubset a* \sqsubset \top$. For connivence let $x*$ denote the set of all stings where $x$ is a prefix, and $s$ denote the singleton set $\{s\}$, thus $\sqsubseteq = \subseteq$ in our lattice.
 \[
  \alpha(x): L \rightarrow L^\# =
   \begin{cases} 

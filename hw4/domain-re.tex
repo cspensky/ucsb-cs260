@@ -103,7 +103,7 @@
 %	NAME AND CLASS SECTION
 %----------------------------------------------------------------------------------------
 
-\newcommand{\hmwkTitle}{Assignment\ \#4\\ String Constant} % Assignment title
+\newcommand{\hmwkTitle}{Assignment\ \#4\\ Regular Expression} % Assignment title
 \newcommand{\hmwkDueDate}{Tuesday,\ November\ 24,\ 2015} % Due date
 \newcommand{\hmwkClass}{CS\ 260} % Course/class
 \newcommand{\hmwkClassInstructor}{Prof. Hardekopf} % Teacher/lecturer
@@ -127,7 +127,8 @@
 %----------------------------------------------------------------------------------------
 \newcommand{\powerset}[1]{\mathbb{P}(#1)}
 
-
+\newcommand{\regExpSet}[1]{\mathbf{regExpSet}(#1)}
+\newcommand{\genRegExp}[1]{\mathbf{genRegExp}(#1)}
 \begin{document}
 
 
@@ -137,13 +138,12 @@
 
 
 \section{Abstraction Domain Lattice}
-Let our original lattice $L = (\powerset{S}, \leq)$ and our abstract-domain lattice $L^\# = (S \cup \{ \top,\bot \},\sqsubseteq)$ where $S$ is the set of all strings (including the empty string) where $\top = S$ and $\bot$ is \emph{undefined}. Let $\bot \sqsubset s \sqsubset \top, \forall s \in S$, i.e. the lattice of height 3, infinite width. 
+Let our original lattice $L = (\powerset{S}, \leq)$ and our abstract-domain lattice $L^\# = (\regExpSet{x}, x \in \powerset{S \cup \{|,*,+,(,)\} } \cup \{ \top,\bot \},\sqsubseteq)$ where $S$ is the set of all strings (including the empty string) where $\top = S$ and $\bot$ is \emph{undefined}. For connivence let all regular expressions, $expr$, denote the set of all possible strings that can be constructed from the expression, $\regExpSet{expr}$, and  $s$ denote the singleton set $\{s\}$, thus $\sqsubseteq = \subseteq$ in our lattice.  Intuitively, $\regExpSet{s} = s$.  Also, let $\genRegExp{\{a,b,c\}}$ be the function that will generate the most concise regular expression to that contains all the elements in the set (Note that $\top$ will never be returned because of the $|$ operator, i.e. a regular expression can always be generated).
 \[
  \alpha(x): L \rightarrow L^\# =
   \begin{cases} 
       \hfill \bot    \hfill & \text{ if $x$ is \{\}} \\
-      \hfill s \hfill & \text{ if $x$ is \{s\}} \\
-      \hfill \top \hfill & \text{otherwise}
+      \hfill \genRegExp{s} \hfill & \text{Otherwise} \\
   \end{cases}
 \]
 
@@ -151,36 +151,42 @@ Let our original lattice $L = (\powerset{S}, \leq)$ and our abstract-domain latt
 \begin{itemize}
 	\item $\bot \sqcap x = \bot, \forall x$
 	\item $\top \sqcap x = x, \forall x$
-	\item $x \sqcap y = \bot, \forall x,y \in S, x \neq y$
+	\item $x \sqcap y = x, \genRegExp{\regExpSet{x} \cap \regExpSet{y}}$
 \end{itemize}
 \paragraph{Join ($x \in L^\#$)}
 \begin{itemize}
 	\item $\bot \sqcup x = x, \forall x$
 	\item $\top \sqcup x = \top, \forall x$
-	\item $x \sqcup y = \top, \forall x,y \in S, x \neq y$
+	\item $x \sqcup y = \genRegExp{\regExpSet{x} \cup \regExpSet{y}}$
 \end{itemize}
 
-The lattice is infinite, but of of finite height, therefore it \textbf{is noetherian}.
+The lattice is infinite, and also of infinite height because of the inclusion of the $|$ operator. The $+$ can only express strings which have common subsequences, and are not expressive enough to grow infinitely since our $\genRegExp{}$ will always return the most concise possible regular expression.  Since the $|$ operator is our pain point, our widening operator must remove the $|$'s.  Let our widening operator be defined as follows:
+\[
+ x \bigtriangledown_{lim} y : L^\# \times L^\# \rightarrow L^\# =
+  \begin{cases} 
+      \hfill x \sqcup y    \hfill & \text{ \# of $|$'s in $x \sqcup y \leq lim$} \\
+      \hfill \top \hfill & \text{Otherwise} \\
+  \end{cases}
+\]
+This definition trivially satisfies condition 1,  $x \sqsubseteq x \bigtriangledown_{lim} y, y \sqsubseteq x \bigtriangledown_{lim} y$.  Similarly, because of our definition, no chains can be strictly ascending, as they will be limited by $lim$.
 
 \subsection{Monotone Operators}
 \begin{figure*}
-
 \centering
-\subfloat[Concatenation (+)]{
+\subfloat[Addition (+)]{
     \begin{tabular}{c|ccccc}
-     			& $\bot$  	&	$y \in S$ 	& $\top$ \\ \hline
-    $\bot$  		&    $\bot$	&	$y$		& $\top$          \\
-    $x \in S$  	&   	$x$		&	$\top$	& $\top$          \\
-    $\top$  		&    $\top$	&	$\top$	& $\top$          \\
+     			& $\bot$  	&	$y$ 	&$\top$ \\ \hline
+    $\bot$  	&    $\bot$	&	$y$		&$\top$          \\
+    $x$  		&   	$x$		&	$x \sqcup y$	&$\top$          \\
+    $\top$  	&    $\top$	&	$\top$	&$\top$          \\
     \end{tabular}
-}~~~~~
+}~~~~
 \subfloat[Comparator ($\leq$)]{
- \begin{tabular}{c|ccccc}
-   
-     			& $\bot$  	&	$y \in S$ 	& $\top$ \\ \hline
-    $\bot$  		&    $T$	&	$T$		& $T$          \\
-    $x \in S$  	&   	$F$		&	$\mathsf{substring}(x,y)$	& $T,F$          \\
-    $\top$  		&    $F$	&	$T,F$	& $T,F$          \\
+    \begin{tabular}{c|ccccc}
+     			& $\bot$  	&	$y$ 	&$\top$ \\ \hline
+    $\bot$  	&    $T$		&	$T$		&$T$          \\
+    $x$  		&   	$F$		&	$x \sqsubseteq y?$	&$T,F$          \\
+    $\top$  	&    $F$		&	$T,F$	&$T,F$          \\
     \end{tabular}
 }
 \caption{Arithmetic Tables}
@@ -189,20 +195,19 @@ The lattice is infinite, but of of finite height, therefore it \textbf{is noethe
 
 
 \paragraph{Concatenation (+)}
-For + to be monotone the following must hold: $x+y \leq x'+y' \Rightarrow  \alpha(x)+\alpha(y) \sqsubseteq \alpha(x')+\alpha(y')$, where $x,y,x',y' \in \powerset{S}$ and $a \leq b \Rightarrow \mathbf{substring}(a,b)$ for $a,b \in S$ and $x+y \Rightarrow \{x_i+y_i\} \forall x_i \in x, y_i \in y$.  Similarly $x \leq y \Rightarrow \mathbf{substring}(x_i, y_i) \forall x_i \in x, y_i \in y$.  In all cases $|x| = |y|$ and $|x'| = |y'|$.
+For + to be monotone the following must hold: $x+y \leq x'+y' \Rightarrow  \alpha(x)+\alpha(y) \sqsubseteq \alpha(x')+\alpha(y')$, where $x,y,x',y' \in \powerset{S}$ $x+y \Rightarrow x \cup y$.  Similarly $x \leq y \Rightarrow x \subseteq y$.
 
 \begin{itemize}
-	\item For case where $x = y = \{\}$, this holds trivially.
-	\item Similarly for $|x| = |y| \geq 1$ and $|x'| = |y'| \geq 1$, since $\top \sqsubseteq \top$ will always be true.
+	\item For case where $x = y = \text{``''}$, this holds trivially.
+	\item Otherwise, we need to show that $\genRegExp{x} \sqcup \genRegExp{y} \sqsubseteq  \genRegExp{x'} \sqcup \genRegExp{y'}$.  We know that $x \cup y \subseteq x' \cup y'$.  Thus since $\genRegExp{}$ returns the most concise regular expression that represents all $a \in x$, $x = \regExpSet{\genRegExp{x}}$. Thus, $x \cup y = \regExpSet{\genRegExp{x \cup y}}$ and $x' \cup y' = \regExpSet{\genRegExp{x' \cup y'}}$ which satisfies this condition.
 \end{itemize}
 $\square$
 
 \paragraph{Comparison ($\leq$)}
-The same logic follows for $\leq$. For $\leq$ to be monotone the following must hold: $x \leq y \Rightarrow  \alpha(x) \sqsubseteq \alpha(y)$, where $x,y \in \powerset{S}$ and $x \leq y \Rightarrow \mathbf{substring}(x_i,y_i) \forall x_i \in x, y_i \in y$.
+The same logic follows for $\leq$. For $\leq$ to be monotone the following must hold: $x \leq y \Rightarrow  \alpha(x) \sqsubseteq \alpha(y)$, where $x,y \in \powerset{S}$ and $x \leq y \Rightarrow x \subseteq y$.
 \begin{itemize}
 	\item For case where $x = y = \{\}$, this holds trivially.
-	\item Similarly for $|x| = |y| = 1$, then the definitions are identical.
-	\item Similarly for $|x| = |y| \geq 1$, since $\top \sqsubseteq \top$ will always be true.
+	\item Otherwise, we must show that $\genRegExp{x} \sqsubseteq \genRegExp{y}$. Since $\genRegExp{}$ returns the most concise regular expression, we not that $x = \regExpSet{\genRegExp{x}}$.  Thus $\regExpSet{\genRegExp{x}} \sqsubseteq \regExpSet{\genRegExp{y}}$, which by definition satisfies this condition.
 \end{itemize}
 $\square$
 
@@ -211,7 +216,7 @@ $\square$
  \gamma(\hat{x}): L^\# \rightarrow L =
   \begin{cases} 
       \hfill \{\}    \hfill & \text{ if $\hat{x}$ is $\bot$} \\
-      \hfill \{s\} \hfill & \text{ if $\hat{x}$ is s} \\
+      \hfill  \regExpSet{x} \hfill & \text{ if $\hat{x}$ is a regular expression} \\
       \hfill S \hfill & \text{ if $\hat{x}$ is $\top$}
   \end{cases}
 \]
@@ -220,19 +225,17 @@ We must show that $\alpha(x) \sqsubseteq \hat{x} \iff x \subseteq \gamma(\hat{x}
 $\alpha(x) \sqsubseteq \hat{x} \Rightarrow x \subseteq \gamma(\hat{x})$:
 \begin{itemize}
 	\item If  $x = \{\}$, this holds trivially.
-	\item If $|x| = 1$, then either $\hat{x} \in S$, which holds trivially, or $\hat{x} = \top$, and $x \subseteq S, \forall x$ 
-	\item For $|x| \geq 1$, $\hat{x} = \top$ must be true, and $x \subseteq S, \forall x$ 
+	\item Otherwise, either $\hat{x} = \top$, which holds trivially, or $\hat{x}$ is a regular expression. Since our regular expression are the most concise possible expressions that represent all elements the input set, we know that $x \subseteq \gamma(\hat{x})$ must be true. 
 \end{itemize}
 $ x \subseteq \gamma(\hat{x}) \Rightarrow \alpha(x) \sqsubseteq \hat{x}$:
 \begin{itemize}
 	\item If  $x = \{\}$, this holds trivially.
-	\item If $|x| = 1$, then either $\hat{x} \in S$, which holds trivially, or $\hat{x} = \top$, and $\alpha(x) \sqsubseteq \top, \forall x$ 
-	\item For $|x| \geq 1$, $\hat{x} = \top$ must be true, and $\alpha(x) \subseteq \top, \forall x$ 
-\end{itemize}
+	\item Otherwise, every element in $x$ can be represented by $\hat{x}$, thus $\alpha(x) \sqsubseteq \hat{x}$ must be true since, $\alpha(x)$ returns the most precise regular expression representing all of $x$.  Any other conclusion would be a contradiction to our definition.
+	\end{itemize}
 $\square$
 
 \subsection{Soundness}
-Because a Galois connection exists, our approximation is both sound and precise.
+Because a Galois connection exists, our approximation is sound.  However, because we are using a widening operator, we lose precision.  However, in the best case, i.e. we never hit our limit of $|$'s, we will actually return the exact input.  Otherwise, we will only lose precision on those few cases.
 
 
 
