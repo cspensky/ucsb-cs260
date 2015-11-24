@@ -173,11 +173,11 @@ This definition trivially satisfies condition 1,  $x \sqsubseteq x \bigtriangled
 \subsection{Monotone Operators}
 \begin{figure*}
 \centering
-\subfloat[Addition (+)]{
+\subfloat[Concatenation (+)]{
     \begin{tabular}{c|ccccc}
      			& $\bot$  	&	$y$ 	&$\top$ \\ \hline
     $\bot$  	&    $\bot$	&	$y$		&$\top$          \\
-    $x$  		&   	$x$		&	$x \sqcup y$	&$\top$          \\
+    $x$  		&   	$x$		&	$x||y$	&$\top$          \\
     $\top$  	&    $\top$	&	$\top$	&$\top$          \\
     \end{tabular}
 }~~~~
@@ -195,11 +195,11 @@ This definition trivially satisfies condition 1,  $x \sqsubseteq x \bigtriangled
 
 
 \paragraph{Concatenation (+)}
-For + to be monotone the following must hold: $x+y \leq x'+y' \Rightarrow  \alpha(x)+\alpha(y) \sqsubseteq \alpha(x')+\alpha(y')$, where $x,y,x',y' \in \powerset{S}$ $x+y \Rightarrow x \cup y$.  Similarly $x \leq y \Rightarrow x \subseteq y$.
+For + to be monotone the following must hold: $x+y \leq x'+y' \Rightarrow  \alpha(x)+\alpha(y) \sqsubseteq \alpha(x')+\alpha(y')$, where $x,y,x',y' \in \powerset{S}$ and $a \leq b \Rightarrow \mathbf{substring}(a,b)$ for $a,b \in S$ and $x+y \Rightarrow \{x_{i}y_i\} \forall x_i \in x, y_i \in y$.  Similarly $x \leq y \Rightarrow \mathbf{substring}(x_i, y_i) \forall x_i \in x, y_i \in y$.  In all cases $|x| = |y|$ and $|x'| = |y'|$.
 
 \begin{itemize}
 	\item For case where $x = y = \text{``''}$, this holds trivially.
-	\item Otherwise, we need to show that $\genRegExp{x} \sqcup \genRegExp{y} \sqsubseteq  \genRegExp{x'} \sqcup \genRegExp{y'}$.  We know that $x \cup y \subseteq x' \cup y'$.  Thus since $\genRegExp{}$ returns the most concise regular expression that represents all $a \in x$, $x \subseteq \regExpSet{\genRegExp{x}}$. Thus, $x \cup y \subseteq \regExpSet{\genRegExp{x \cup y}}$ and $x' \cup y' \subseteq \regExpSet{\genRegExp{x' \cup y'}}$.  If there exists an element $z \in \regExpSet{\genRegExp{x \cup y}}, z \notin \regExpSet{\genRegExp{x' \cup y'}}$, this would imply that there are elements that are represented by $\genRegExp{x \cup y}$ that are not represented by $\genRegExp{x' \cup y'}$, which we know can't happen since $x \cup y \subseteq x' \cup y'$.  Therefore our assertion must hold.
+	\item Otherwise, we need to show that $\genRegExp{x}||\genRegExp{y} \sqsubseteq  \genRegExp{x'}||\genRegExp{y'}$.  We know that $xy \leq x'y''$, i.e. that $xy$ is a substring of $x'y'$.  Thus since $\genRegExp{}$ returns the most concise regular expression that represents all $a \in x$, $x \subseteq \regExpSet{\genRegExp{x}}$. Thus, $xy \subseteq \regExpSet{\genRegExp{xy}}$ and $x'y' \subseteq \regExpSet{\genRegExp{x'y'}}$.  Since each regular expression necessarily contained the initial set, concatenating the expressions will still satisfy the condition of each, by taking the two representative sets and concatenating the strings of each. If there exists an element $z \in \regExpSet{\genRegExp{x \cup y}}, z \notin \regExpSet{\genRegExp{x' \cup y'}}$, this would imply that there are elements that are represented by $\genRegExp{xy}$ that are not represented by $\genRegExp{x' y'}$, which we know can't happen since $xy \leq x'y'$.  Therefore our assertion must hold.
 \end{itemize}
 $\square$
 
