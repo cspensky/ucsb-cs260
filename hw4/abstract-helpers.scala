@@ -105,7 +105,7 @@ object Helpers {
     }
 
   // section 2.3.5
-  def initstate( p:Program ): State = {
+  def initstate( p:Program ): (Int, State) = {
     // Initialize our class map
     θ.init(p)
 
@@ -134,7 +134,7 @@ object Helpers {
       m + (d.x -> defaultvalue(d.τ))
     } + (Var("self") -> Reference(addr))
 
-    State(None,Locals(locals),heap, kont)
+    (0, State(None,Locals(locals),heap, kont))
   }
 
   // section 2.3.6

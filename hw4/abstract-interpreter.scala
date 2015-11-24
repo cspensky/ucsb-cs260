@@ -34,30 +34,43 @@ object Abstract {
           //       is no widening.
 
           // worklist
-          var work = Set[State]( initstate(ast) )
+          var work = Set[(Int,State)]( initstate(ast) )
 
           // remember set
           val memo = MMap[Int, State]()
 
           // compute fixpoint
           while ( work.nonEmpty ) {
-            work = work.flatMap( _.next ).flatMap( ς ⇒
-              if ( ς.fin ) {
+            work = work.map( _._2.next ).flatMap( ς ⇒
+              if ( ς._2.fin ) {
                 // if this is a final state, we don't need to do
                 // anything
                 if (DEBUG) println("final state " + ς)
                 None
-              } else if ( ς.so.isEmpty && !ς.κs.head.isInstanceOf[FinK] ) {
+              }
+              else if ( ς._2.so.isEmpty && !ς._2.κs.head.isInstanceOf[FinK] ) {
                 // we'll skip memoizing intermediate states (i.e.,
                 // states with no statement) just to save space; go
                 // ahead and put such states on the worklist
-                if (DEBUG) println("new state FinK " + ς)
+                if (DEBUG) println("new state FinK " + ς._1)
                 Some(ς)
-              } else if ( !memo(ς) ) {
+              }
+              else if ( !(memo contains ς._1) || memo(ς._1) != ς._2 ) {
                 // if the state does have a statement, and we have not
                 // seen it before, memoize it and put it on the
                 // worklist
-                if (DEBUG) println("new state " + ς)
+                if (DEBUG) {
+                  if (memo contains ς._1) {
+                    println(memo(ς._1) != ς._2)
+
+                    if (ς._1 == 44)
+                      println(memo(ς._1) + "\n!=\n" + ς._2)
+                  }
+                  if (!ς._2.κs.isEmpty)
+                    println("new state " + ς._1 + " " + ς._2.κs.head + " (" + ς._2.κs.length + ")")
+                  else
+                    println("new state " + ς._1 + " EMPTY")
+                }
                 memo += ς
                 Some(ς)
 
@@ -76,13 +89,13 @@ object Abstract {
           // Print statements' node ids.
           val out = MMap[Int, Value]()
           memo foreach {
-            case ς @ State(Some(print @ Print(e)), _, _, _) ⇒
+            case ς @ (id, State(Some(print @ Print(e)), _, _, _)) ⇒
               out get print.id match {
                 case None ⇒
-                  out(print.id) = ς.η(e)
+                  out(print.id) = ς._2.η(e)
 
                 case Some(v) ⇒
-                  out(print.id) = ς.η(e) ⊔ v
+                  out(print.id) = ς._2.η(e) ⊔ v
               }
 
             case _ ⇒ ()
@@ -178,8 +191,16 @@ case class State(/* θ is a global now */ so: Option[Stmt], ρ: Locals, σ: Heap
         sys.error("Got bad expression. (undefined behavior)")
     }
 
+  def ⊔(s:State): (State) = {
+    assert(so == s.so)
+    if (κs == s.κs)
+      State(so, s.ρ ⊔ ρ, s.σ ⊔ σ, κs)
+    else
+      State(so, s.ρ ⊔ ρ, s.σ ⊔ σ, κs ++ s.κs)
+  }
+
   // the state transition relation.
-  def next: Set[State] =
+  def next: (Int ,State) =
     so match {
       // Cases with statements (Rules 1-8)
       case Some(s) =>
@@ -189,7 +210,7 @@ case class State(/* θ is a global now */ so: Option[Stmt], ρ: Locals, σ: Heap
             if (DEBUG) println("Assign " + x + " = " + e + " (" + η(e) +")")
 
             // Always just assign the value
-            Set(State(None, ρ + (x -> η(e)), σ, κs))
+            (s.id, State(None, ρ + (x -> η(e)), σ, κs))
 
           // Rule 2
           case Update(e1: Exp, x: Var, e2) =>
@@ -198,7 +219,7 @@ case class State(/* θ is a global now */ so: Option[Stmt], ρ: Locals, σ: Heap
             val ref:Reference = η(e1).asInstanceOf[Reference]
             val new_heap = update(σ, ref.as, x, η(e2))
 
-            Set(State(None, ρ, new_heap, κs))
+            (s.id, State(None, ρ, new_heap, κs))
 
           // Rule 3
           case Call(x, e, mn, args) =>
@@ -215,7 +236,7 @@ case class State(/* θ is a global now */ so: Option[Stmt], ρ: Locals, σ: Heap
             }
 
             // Return our set of states
-            states
+            (s.id, states.reduce(_⊔_))
 
 
           // Rule 4
@@ -225,7 +246,7 @@ case class State(/* θ is a global now */ so: Option[Stmt], ρ: Locals, σ: Heap
             // Call our constructor
             val con = construct(x, cn, args.map(η(_)), ρ, σ, κs)
 
-            Set(State(None,con._1,con._2,con._3))
+            (s.id, State(None,con._1,con._2,con._3))
 
           // Rule 5 and 6
           case If(e, tb, fb) =>
@@ -235,15 +256,15 @@ case class State(/* θ is a global now */ so: Option[Stmt], ρ: Locals, σ: Heap
 
             if (DEBUG) println("Exp: "+exp_val)
 
-            var states = Set.empty[State]
+            var branches = Seq.empty[Kont]
             exp_val match {
               case b:Bool =>
 
                 if (b contains true) {
-                  states += State(None, ρ, σ, toSK(tb) ++ κs)
+                  branches = branches ++ toSK(tb)
                 }
                 if (b contains false) {
-                  states += State(None, ρ, σ, toSK(fb) ++ κs)
+                  branches = branches ++ toSK(fb)
                 }
 
               case _ =>
@@ -251,7 +272,7 @@ case class State(/* θ is a global now */ so: Option[Stmt], ρ: Locals, σ: Heap
             }
 
             // Return our possible states
-            states
+            (s.id, State(None, ρ, σ, branches ++ κs))
 
 
           // Rule 7 and 8
@@ -263,27 +284,28 @@ case class State(/* θ is a global now */ so: Option[Stmt], ρ: Locals, σ: Heap
             if (DEBUG) println("Exp "+exp_val)
 
             // Figure out the possible continuations
-            var states = Set.empty[State]
+            var branches = Seq.empty[Kont]
             exp_val match {
               case b:Bool =>
                 if (b contains true) {
-                  states += State(None, ρ, σ, toSK(body) ++ Seq(WhileK(e, body)) ++ κs)
+                  branches = toSK(body) ++ Seq(WhileK(e, body))
                 }
                 if (b contains false) {
-                  states += State(None, ρ, σ, κs)
+                  // Nothing
+//                  states += State(None, ρ, σ, κs)
                 }
               case _ =>
                 sys.error("undefined behavior. (")
             }
 
             // Return our possible states
-            states
+            (s.id, State(None, ρ, σ, branches ++ κs))
 
 
           case Print(e) =>
             if (DEBUG) println(e + ": " + η(e))
 //            else println(η(e))
-            Set(State(None, ρ, σ, κs))
+            (s.id, State(None, ρ, σ, κs))
         }
 
       case None =>
@@ -311,7 +333,7 @@ case class State(/* θ is a global now */ so: Option[Stmt], ρ: Locals, σ: Heap
                   sys.error("undefined behavior. (No ret on Kont after FinK)")
               }
             }
-            states
+            (addr.loc, states.reduce(_⊔_))
 
           case RetK(x, e, ret_locals) =>
             if (DEBUG) println("retK " + x + " " + e + " " + ret_locals)
@@ -322,7 +344,7 @@ case class State(/* θ is a global now */ so: Option[Stmt], ρ: Locals, σ: Heap
           case StmtK(stmnt: Stmt) =>
             if (DEBUG) println("StmtK " + stmnt)
 
-            return Set(State(Option(stmnt), ρ, σ, κs.tail))
+            (stmnt.id, State(Option(stmnt), ρ, σ, κs.tail))
 
           // Rule 11 and 12
           case WhileK(e, ss) =>
@@ -333,15 +355,15 @@ case class State(/* θ is a global now */ so: Option[Stmt], ρ: Locals, σ: Heap
             if (DEBUG) println("Exp: "+exp_val)
             exp_val match {
               case b: Bool =>
-                var states = Set.empty[State]
+                var branches = Seq.empty[Kont]
                 // do a function call
                 if (b contains true) {
-                  states += State(None, ρ, σ, toSK(ss) ++ κs)
+                  branches = branches ++ toSK(ss) ++ κs
                 }
                 if (b contains false) {
-                  states += State(None, ρ, σ, κs.tail)
+                  branches = branches ++ κs.tail
                 }
-                states
+                (e.id,  State(None, ρ, σ, branches))
               case _ =>
                 sys.error("undefined behavior")
             }

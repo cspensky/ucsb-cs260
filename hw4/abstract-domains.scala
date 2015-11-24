@@ -62,6 +62,18 @@ case class Locals( var_to_value:ListMap[Var, Value] ) {
     Locals( var_to_value + new_var_value )
 
   }
+
+  def ⊔( l:Locals): Locals = {
+
+    val mergedValues = var_to_value ++ l.var_to_value.map {
+      case (var_name, value) => if (var_to_value contains var_name) {
+        var_name -> (value ⊔ var_to_value(var_name))
+      } else {
+        var_name -> value
+      }
+    }
+    Locals(mergedValues)
+  }
 }
 
 //——————————————————————————————————————————————————————————————————————————————
@@ -79,6 +91,26 @@ case class Locals( var_to_value:ListMap[Var, Value] ) {
 case class Heap( address_to_obj:Map[Address, Object] ,
                  address_to_kont:Map[Address, Set[Seq[Kont]]]) {
   // Map map addresses to objects
+
+  def ⊔( h:Heap): Heap = {
+    val mergedObjs = address_to_obj ++ h.address_to_obj.map {
+      case (addr, obj: Object) => if (address_to_obj contains addr) {
+        addr -> (obj ⊔ address_to_obj(addr))
+      } else {
+        addr -> obj
+      }
+    }
+
+    val mergedKonts = address_to_kont ++ h.address_to_kont.map {
+      case (addr, konts) => if (address_to_kont contains addr) {
+        addr -> (konts ++ address_to_kont(addr))
+      } else {
+        addr -> konts
+      }
+    }
+    Heap(mergedObjs, mergedKonts)
+  }
+
 
   def getObj( addr:Address ): Object =
     address_to_obj(addr)
