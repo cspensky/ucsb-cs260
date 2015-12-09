@@ -1,0 +1,26 @@
+/**
+ * cyclevarfld.lwnn 
+ */
+ 
+class Main {
+    def Main(a:Obj, b:Obj, c:Obj) = {
+        a := new Obj();
+        b := new Obj();
+        a.fld := b;
+        b := a.fld;
+
+        // we use this to inspect a's fields
+        c := a.fld;
+    }
+}
+class Obj {
+    fields fld:Obj;
+}
+
+/*
+Main_a → 9
+Main_b → null, 11
+Main_c → null, 11
+Main_self → 1
+Obj_self → 9, 11
+*/

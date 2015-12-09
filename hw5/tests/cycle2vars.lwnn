@@ -1,0 +1,20 @@
+/**
+ * cycle2vars.lwnn 
+ */
+ 
+class Main {
+    def Main(a:Obj, b:Obj) = {
+        a := new Obj();
+        b := new Obj();
+        a := b;
+        b := a;
+    }
+}
+class Obj {}
+
+/*
+Main_a → 7, 9
+Main_b → 7, 9
+Main_self → 1
+Obj_self → 7, 9
+*/

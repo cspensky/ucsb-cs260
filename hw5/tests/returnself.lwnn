@@ -1,0 +1,18 @@
+/**
+ * returnself.lwnn 
+ */
+ 
+class Main {
+    def Main(a:Main) = {
+        a := self.foo();
+    }
+    def foo() = {
+        return self;
+    }
+}
+
+/*
+Main_a → 1
+Main_self → 1
+foo_self → 1
+*/

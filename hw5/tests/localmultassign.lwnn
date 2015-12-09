@@ -1,0 +1,20 @@
+/**
+ * localmultassign.lwnn 
+ */
+ 
+class Main {
+    def Main(a:Obj,b:Obj) = {
+        a := null;
+        a := new Obj();
+        a := new Obj();
+        b := a;
+    }
+}
+class Obj {}
+
+/*
+Main_a → null, 10, 12
+Main_b → null, 10, 12
+Main_self → 1
+Obj_self → 10, 12
+*/

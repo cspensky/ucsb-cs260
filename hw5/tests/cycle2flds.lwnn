@@ -1,0 +1,30 @@
+/**
+ * cycle2flds.lwnn 
+ */
+ 
+class Main {
+    def Main(a:Obj, b:Obj, c:Obj, d:Obj, e:Obj) = {
+        a := new Obj();
+        b := new Obj();
+        a.fld := b;
+        c := a.fld;
+        b.fld := c;
+
+        // we use these so we can inspect the fields of a and b
+        d := a.fld;
+        e := b.fld;
+    }
+}
+class Obj {
+    fields fld:Obj;
+}
+
+/*
+Main_a → 13
+Main_b → 15
+Main_c → null, 15
+Main_d → null, 15
+Main_e → null, 15
+Main_self → 1
+Obj_self → 13, 15
+*/

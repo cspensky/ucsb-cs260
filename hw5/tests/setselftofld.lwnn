@@ -1,0 +1,19 @@
+/**
+ * setselftofld.lwnn 
+ */
+ 
+class Main {
+    def Main(a:Obj) = {
+        a := new Obj();
+        a := a.fld;
+    }
+}
+class Obj {
+    fields fld:Obj;
+}
+
+/*
+Main_a → null, 5
+Main_self → 1
+Obj_self → 5
+*/

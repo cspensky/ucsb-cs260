@@ -1,0 +1,18 @@
+/**
+ * assignnull2.lwnn 
+ */
+ 
+class Main {
+    def Main(a:Obj) = {
+        a := new Obj();
+        a := new Obj();
+        a := null;
+    }
+}
+class Obj {}
+
+/*
+Main_a → null, 5, 7
+Main_self → 1
+Obj_self → 5, 7
+*/

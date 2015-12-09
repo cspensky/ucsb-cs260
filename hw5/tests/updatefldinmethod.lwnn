@@ -1,0 +1,31 @@
+/**
+ * updatefldinmethod.lwnn 
+ */
+ 
+class Main {
+    def Main(a:Obj, b:Obj) = {
+        a := new Obj();
+        self.update(a);
+
+        // we use this to inspect the fields of a
+        b := a.fld;
+    }
+    def update(x:Obj, y:Obj) = {
+        y := new Obj();
+        x.fld := y;
+    }
+}
+class Obj {
+    fields fld:Obj;
+}
+
+/*
+Main_a → 7
+Main_b → null, 30
+Main_self → 1
+Main_tmp_var1 → 1
+Obj_self → 7, 30
+update_self → 1
+update_x → 7
+update_y → null, 30
+*/

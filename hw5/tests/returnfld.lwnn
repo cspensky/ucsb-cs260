@@ -1,0 +1,28 @@
+/**
+ * returnfld.lwnn 
+ */
+ 
+class Main {
+    def Main(a:Obj, b:Obj, c:Obj) = {
+        a := new Obj();
+        b := new Obj();
+        a.fld := b;
+        c := self.foo(a);
+    }
+    def foo(x:Obj):Obj = {
+        return x.fld;
+    }
+}
+class Obj {
+    fields fld:Obj;
+}
+
+/*
+Main_a → 9
+Main_b → 11
+Main_c → null, 11
+Main_self → 1
+Obj_self → 9, 11
+foo_self → 1
+foo_x → 9
+*/

@@ -1,0 +1,20 @@
+/**
+ * returnnullvar.lwnn 
+ */
+ 
+class Main {
+    def Main(a:Obj) = {
+        a := self.bar();
+    }
+    def bar(x:Obj):Obj = {
+        return x;
+    }
+}
+class Obj {}
+
+/*
+Main_a → null
+Main_self → 1
+bar_self → 1
+bar_x → null
+*/

@@ -1,0 +1,23 @@
+/**
+ * returnarg.lwnn 
+ */
+ 
+class Main {
+    def Main(a:Obj,b:Obj) = {
+        a := new Obj();
+        b := self.foo(a);
+    }
+    def foo(x:Obj):Obj = {
+        return x;
+    }
+}
+class Obj {}
+
+/*
+Main_a → 7
+Main_b → 7
+Main_self → 1
+Obj_self → 7
+foo_self → 1
+foo_x → 7
+*/

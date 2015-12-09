@@ -1,0 +1,16 @@
+/**
+ * assignempty.lwnn 
+ */
+ 
+class Main {
+    def Main(a:Obj,b:Obj) = {
+        a := b;
+    }
+}
+class Obj {}
+
+/*
+Main_a →
+Main_b →
+Main_self → 1
+*/

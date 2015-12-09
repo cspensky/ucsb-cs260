@@ -1,0 +1,16 @@
+/**
+ * new.lwnn 
+ */
+ 
+class Main {
+    def Main(a:Obj) = {
+        a := new Obj();
+    }
+}
+class Obj {}
+
+/*
+Main_a → 5
+Main_self → 1
+Obj_self → 5
+*/

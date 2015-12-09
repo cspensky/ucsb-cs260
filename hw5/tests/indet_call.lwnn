@@ -1,0 +1,35 @@
+/**
+ * indet_call.lwnn 
+ */
+ 
+class Main {
+    def Main(a:Obj, b:Obj, c:Obj, d:Obj) = {
+        a := new Obj();
+        b := new Obj2();
+        c := a.bar(a,b);
+        d := b.bar(a,b);
+    }
+}
+class Obj {
+    def bar(x:Obj, y:Obj):Obj = {
+        return x;
+    }
+}
+class Obj2 extends Obj {
+    def bar(x:Obj, y:Obj):Obj = {
+        return y;
+    }
+}
+
+/*
+Main_a → 11
+Main_b → 13
+Main_c → 11
+Main_d → 13
+Main_self → 1
+Obj2_self → 13
+Obj_self → 11
+bar_self → 11
+bar_x → 11
+bar_y → 13
+*/
