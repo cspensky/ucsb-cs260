@@ -304,7 +304,9 @@ object Andersen {
                         // Get our graph node
                         val graphNode = Graph.varToNode(method2, v1)
                         graphNode.cons += LhsCon(graphNode, v2, Graph.varToNode(method, x))
-                        obj.asInstanceOf[ObjNode].fields(v2).subsetof += Graph.varToNode(method, x)
+                        if (obj.asInstanceOf[ObjNode].fields.contains(v2)) {
+                          obj.asInstanceOf[ObjNode].fields(v2).subsetof += Graph.varToNode(method, x)
+                        }
 //                        Graph.varToNode(method, x).ptsto += obj.asInstanceOf[ObjNode].fields(v2)
                       case v_ret@Var(_) =>
                         if (DEBUG) println("    Rete = "+v_ret)
