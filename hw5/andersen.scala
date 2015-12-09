@@ -12,7 +12,7 @@ import TypeAliases._
 object Andersen {
   // flag set by command-line argument: should we use cycle elimination?
   var CE = false
-  var DEBUG = true
+  var DEBUG = false
 
   def main( args:Array[String] ) {
     Parse.getAST( scala.io.Source.fromFile(args(0)).mkString ) match {
@@ -27,7 +27,10 @@ object Andersen {
 
           // program is well-formed and well-typed; ready to analyze.
           // first check whether we should use cycle elimination
-          if (args.size > 1 && args(1) == "--ce") CE = true
+          if (args.size > 1 && args(1) == "--ce") {
+            CE = true
+            sys.error("Cycle Elimination not implemented due to time and sanity contraints -- :-(")
+          }
 
           // create and solve the constraint graph
           createGraph(ast)
@@ -178,7 +181,6 @@ object Andersen {
     // Loop over all of our classes
     for (cls <- ast.classes) {
 
-
       // Loop over every method (This time evaluating the bodies)
       for (method <- cls.methods) {
 
@@ -241,7 +243,6 @@ object Andersen {
               val selfVar = selfMethod.params(0).x
 
               Graph.varToNode(selfMethod, selfVar).ptsto += objNode
-//              Graph.varToNode(selfMethod, selfVar).subsetof +=  Graph.varToNode(method, x)
 
             // Updating a field?
             case Update( e1:Exp, x:Var, e2:Exp ) =>
@@ -296,6 +297,23 @@ object Andersen {
                   if (obj.isInstanceOf[ObjNode]) {
                     val method2 = methodMap(obj.asInstanceOf[ObjNode].cn,mn)
 
+                    // What is our return value?
+                    method2.rete match {
+                      case a@Access(v1: Var, v2: Var) =>
+                        if (DEBUG) println("    Rete = "+a)
+                        // Get our graph node
+                        val graphNode = Graph.varToNode(method2, v1)
+                        graphNode.cons += LhsCon(graphNode, v2, Graph.varToNode(method, x))
+//                        Graph.varToNode(method, x).ptsto += obj.asInstanceOf[ObjNode].fields(v2)
+                      case v_ret@Var(_) =>
+                        if (DEBUG) println("    Rete = "+v_ret)
+                        Graph.varToNode(method2,v_ret).subsetof += Graph.varToNode(method,x)
+                      case Nulls() =>
+                        Graph.varToNode(method, x).ptsto += Null
+                      case _ =>
+                        sys.error("not handling "+ method2.rete)
+                    }
+
                     // Update the parameters
                     var idx = 0
                     for (param <- method2.params) {
@@ -305,68 +323,28 @@ object Andersen {
                       if (idx == 0) {
                         Graph.varToNode(method2,param.x).ptsto ++= Graph.varToNode(method,selfVar).ptsto
 
-                        // Assuming that we return self
-//                        Graph.varToNode(method,x).ptsto ++= Graph.varToNode(method2,param.x).ptsto
-
-                        method2.rete match {
-                          case a@Access(v1: Var, v2: Var) =>
-                            if (DEBUG) println("    Rete = "+a)
-                            // Get our graph node
-                            val graphNode = Graph.varToNode(method2, v1)
-                            graphNode.cons += LhsCon(graphNode, v2, Graph.varToNode(method, x))
-                            // Check all the objects for this field name
-                            for (obj <- graphNode.ptsto) {
-                              if (obj.isInstanceOf[ObjNode]) {
-                                for (fld <- obj.asInstanceOf[ObjNode].fields.keys) {
-                                  println(fld)
-                                  // If we have this field, update its subsetof set
-                                  if (fld == v2) {
-                                    // Update our constraint v1.v2 subseteq x
-
-                                    if (DEBUG) println ("    UPDATED RETURN!")
-                                    Graph.varToNode(method, x).ptsto += obj.asInstanceOf[ObjNode]
-                                    obj.asInstanceOf[ObjNode].subsetof += Graph.varToNode(method, x)
-
-
-                                  }
-                                }
-                              }
-                            }
-                          case v_ret@Var(_) =>
-                            if (DEBUG) println("    Rete = "+v_ret)
-                            Graph.varToNode(method2,v_ret).subsetof += Graph.varToNode(method,x)
-//                            vNode.cons += LhsCon(vNode, fld, Graph.varToNode(method, x))
-
-                          case Nulls() =>
-                            Graph.varToNode(method, x).ptsto += Null
-                          case _ =>
-                            sys.error("not handling "+ method2.rete)
-                        }
-
-
-
-                        // Ensure we update this assignment with self
-//                        vNode.subsetof += Graph.varToNode(method,x)
+                      // Other args
                       } else if (idx < args.length+1) {
                         // using +1 since 0 is self and is implicit
                         val arg_e = args(idx-1)
 
+                        // Pts to and subset relationship
                         if (arg_e.isInstanceOf[Var]) {
                           Graph.varToNode(method2, param.x).ptsto ++= Graph.varToNode(method, arg_e.asInstanceOf[Var]).ptsto
                           Graph.varToNode(method, arg_e.asInstanceOf[Var]).subsetof +=  Graph.varToNode(method2, param.x)
                         }
+
+                      // All other params are Null
                       } else {
                         Graph.varToNode(method2, param.x).ptsto += Null
                       }
 
                       idx += 1
                     }
-
-
                   }
                 }
 
-                // Add our constraint
+                // Add our constraint for solving later
                 var topArgs = Seq[TopNode]()
                 for (a <- args) {
                   if (a.isInstanceOf[Var]) {
@@ -396,58 +374,6 @@ object Andersen {
   // ptsto information across an edge from node n to node m, check
   // whether n and m have identical points-to sets. if they do, then
   // trigger cycle elimination by calling cycleElim(n).
-  //
-  // here is the worklist algorithm:
-  //
-  // initialize the worklist to contain all TopNodes
-  //
-  // while the worklist is not empty:
-  //   n := worklist.pop()
-  //
-  //   for each dst in n.subsetof do {
-  //     propagate n.ptsto to dst.ptsto
-  //     if dst.ptsto changed, add dst to worklist
-  //     // if CE is true, check whether cycle elimination should be triggered
-  //   }
-  //
-  //   if n is an ObjNode, go to the next iteration. else n is a
-  //   TopNode; do the following:
-  //
-  //   for each RhsCon(src, _, fld) in n.cons {
-  //     for each p in n.ptsto {
-  //       update src.subsetof to include p.fields(fld)
-  //       if src.subsetof changed, add src to worklist
-  //     }
-  //   }
-  //
-  //   for each LhsCon(_, fld, dst) in n.cons {
-  //     for each p in n.ptsto {
-  //       update p.fields(fld).subsetof to include dst
-  //       if p.fields(fld).subsetof changed, add p.fields(fld) to worklist
-  //     }
-  //   }
-  //
-  //   for each CallCon(rhs, _, mn, args) in n.cons {
-  //     for each p in n.ptsto {
-  //       let getMethod(p.class, mn) = m @ Method(_, params, _, _, rete)
-  //       let paramsN = params map ( getNode(m, _) )
-  //       let reteN = getNode(m, rete)
-  //       let selfN = getNode(m, Var("self"))
-  //       update selfN.ptsto to include p
-  //       if selfN.ptsto changed, add selfN to worklist
-  //       update reteN.subsetof to include rhs
-  //       if reteN.subsetOf changed, add reteN to worklist
-  //       for each arg in args { 
-  //         let prm be the corresponding member of paramsN
-  //         update arg.subsetof to include prm
-  //         if arg.subsetof changed, add arg to worklist
-  //       }
-  //       for each prm in params that did not have a corresponding arg {
-  //         update prm.ptsto to include Null
-  //         if prm.ptsto changed, add prm to worklist
-  //       }
-  //     }
-  //   }
   //
   def solveGraph() {
 
@@ -568,6 +494,7 @@ object Andersen {
               for (obj <- n.ptsto) {
                 if (obj.isInstanceOf[ObjNode]) {
                   for (f <- obj.asInstanceOf[ObjNode].fields.keys) {
+                    if (DEBUG) println(f)
                     // If we have this field, update its subsetof set
                     if (f == fld) {
                       val tmp = obj.asInstanceOf[ObjNode].fields(fld).subsetof.size
